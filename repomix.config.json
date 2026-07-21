@@ -1,0 +1,46 @@
+{
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml",
+    "removeComments": false,
+    "removeEmptyLines": true,
+    "showLineNumbers": true
+  },
+  "ignore": {
+    "useGitignore": true,
+    "useDotIgnore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      ".dart_tool/**",
+      "**/.dart_tool/**",
+      "build/**",
+      "**/build/**",
+      "android/.gradle/**",
+      "android/app/build/**",
+      "ios/Pods/**",
+      "ios/.symlinks/**",
+      "**/*.g.dart",
+      "**/*.freezed.dart",
+      "**/.idea/**",
+      "**/*.iml",
+      ".metadata",
+      "pubspec.lock",
+      "**/coverage/**",
+      "**/.cache/**",
+      "**/*.log",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.jpeg",
+      "**/*.gif",
+      "**/*.webp",
+      "**/*.svg",
+      "**/*.mp4",
+      "**/*.mov",
+      "**/*.webm",
+      "**/*.ttf",
+      "**/*.otf",
+      "repomix-output.*",
+      "**/repomix-output.*"
+    ]
+  }
+}
