@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'services/database_service.dart';
 import 'utils/colors.dart';
 import 'utils/typography.dart';
@@ -21,11 +22,7 @@ void main() async {
   // Initialise Isar Database
   await DatabaseService.init();
 
-  runApp(
-    const ProviderScope(
-      child: SprinkleApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: SprinkleApp()));
 }
 
 class SprinkleApp extends StatelessWidget {
@@ -51,7 +48,6 @@ class SprinkleApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          scaffoldLineWidth: 0,
           iconTheme: IconThemeData(color: AppColors.neutral),
         ),
       ),
