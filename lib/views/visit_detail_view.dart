@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/visit_record.dart';
 import '../utils/colors.dart';
 import '../utils/date_formatter.dart';
@@ -89,6 +90,30 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
     }
   }
 
+  Future<void> _openInMaps() async {
+    final query = _currentVisit.address ?? _currentVisit.name;
+    final encodedQuery = Uri.encodeComponent(query);
+    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedQuery');
+
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch maps application')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error launching maps: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,6 +189,32 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
             Text(
               _currentVisit.timestamp.toFriendlyString(),
               style: AppTypography.caption,
+            ),
+            const SizedBox(height: 16),
+
+            // Open in Maps Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _openInMaps,
+                icon: const Icon(Icons.map_rounded, color: Colors.white, size: 20),
+                label: const Text(
+                  'Open in Maps',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+              ),
             ),
             const SizedBox(height: 20),
 

@@ -40,7 +40,8 @@
       "**/*.ttf",
       "**/*.otf",
       "repomix-output.*",
-      "**/repomix-output.*"
+      "**/repomix-output.*",
+      "docs/specs/*.md"
     ]
   }
 }

@@ -27,33 +27,43 @@ const VisitRecordSchema = CollectionSchema(
       name: r'imageFileName',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'latitude': PropertySchema(
       id: 2,
+      name: r'latitude',
+      type: IsarType.double,
+    ),
+    r'longitude': PropertySchema(
+      id: 3,
+      name: r'longitude',
+      type: IsarType.double,
+    ),
+    r'name': PropertySchema(
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'notes': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'notes',
       type: IsarType.string,
     ),
     r'rating': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'rating',
       type: IsarType.double,
     ),
     r'tags': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'tags',
       type: IsarType.stringList,
     ),
     r'timestamp': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'timestamp',
       type: IsarType.dateTime,
     ),
     r'uuid': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'uuid',
       type: IsarType.string,
     )
@@ -130,12 +140,14 @@ void _visitRecordSerialize(
 ) {
   writer.writeString(offsets[0], object.address);
   writer.writeString(offsets[1], object.imageFileName);
-  writer.writeString(offsets[2], object.name);
-  writer.writeString(offsets[3], object.notes);
-  writer.writeDouble(offsets[4], object.rating);
-  writer.writeStringList(offsets[5], object.tags);
-  writer.writeDateTime(offsets[6], object.timestamp);
-  writer.writeString(offsets[7], object.uuid);
+  writer.writeDouble(offsets[2], object.latitude);
+  writer.writeDouble(offsets[3], object.longitude);
+  writer.writeString(offsets[4], object.name);
+  writer.writeString(offsets[5], object.notes);
+  writer.writeDouble(offsets[6], object.rating);
+  writer.writeStringList(offsets[7], object.tags);
+  writer.writeDateTime(offsets[8], object.timestamp);
+  writer.writeString(offsets[9], object.uuid);
 }
 
 VisitRecord _visitRecordDeserialize(
@@ -148,12 +160,14 @@ VisitRecord _visitRecordDeserialize(
   object.address = reader.readStringOrNull(offsets[0]);
   object.id = id;
   object.imageFileName = reader.readStringOrNull(offsets[1]);
-  object.name = reader.readString(offsets[2]);
-  object.notes = reader.readStringOrNull(offsets[3]);
-  object.rating = reader.readDouble(offsets[4]);
-  object.tags = reader.readStringList(offsets[5]) ?? [];
-  object.timestamp = reader.readDateTime(offsets[6]);
-  object.uuid = reader.readString(offsets[7]);
+  object.latitude = reader.readDoubleOrNull(offsets[2]);
+  object.longitude = reader.readDoubleOrNull(offsets[3]);
+  object.name = reader.readString(offsets[4]);
+  object.notes = reader.readStringOrNull(offsets[5]);
+  object.rating = reader.readDouble(offsets[6]);
+  object.tags = reader.readStringList(offsets[7]) ?? [];
+  object.timestamp = reader.readDateTime(offsets[8]);
+  object.uuid = reader.readString(offsets[9]);
   return object;
 }
 
@@ -169,16 +183,20 @@ P _visitRecordDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 4:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 7:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 8:
+      return (reader.readDateTime(offset)) as P;
+    case 9:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -733,6 +751,172 @@ extension VisitRecordQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'imageFileName',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      latitudeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'latitude',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      latitudeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'latitude',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition> latitudeEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      latitudeGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      latitudeLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition> latitudeBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'latitude',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      longitudeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'longitude',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      longitudeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'longitude',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      longitudeEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      longitudeGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      longitudeLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      longitudeBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'longitude',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
       ));
     });
   }
@@ -1525,6 +1709,30 @@ extension VisitRecordQuerySortBy
     });
   }
 
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByLatitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByLongitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.desc);
+    });
+  }
+
   QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1625,6 +1833,30 @@ extension VisitRecordQuerySortThenBy
     });
   }
 
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByLatitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByLongitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.desc);
+    });
+  }
+
   QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1703,6 +1935,18 @@ extension VisitRecordQueryWhereDistinct
     });
   }
 
+  QueryBuilder<VisitRecord, VisitRecord, QDistinct> distinctByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'latitude');
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QDistinct> distinctByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'longitude');
+    });
+  }
+
   QueryBuilder<VisitRecord, VisitRecord, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1760,6 +2004,18 @@ extension VisitRecordQueryProperty
   QueryBuilder<VisitRecord, String?, QQueryOperations> imageFileNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'imageFileName');
+    });
+  }
+
+  QueryBuilder<VisitRecord, double?, QQueryOperations> latitudeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'latitude');
+    });
+  }
+
+  QueryBuilder<VisitRecord, double?, QQueryOperations> longitudeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'longitude');
     });
   }
 

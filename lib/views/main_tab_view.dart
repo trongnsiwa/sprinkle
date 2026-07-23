@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/colors.dart';
 import 'camera_view.dart';
+import 'feed_view.dart';
 import 'visit_list_view.dart';
 
 final currentTabProvider = StateProvider<int>((ref) => 1); // 1 = Camera (default)
@@ -43,7 +44,7 @@ class _MainTabViewState extends ConsumerState<MainTabView>
     final selectedIndex = ref.watch(currentTabProvider);
 
     final pages = [
-      const FriendsPlaceholderView(),
+      const FeedView(),
       const CameraView(),
       const VisitListView(),
     ];
@@ -84,7 +85,7 @@ class _MainTabViewState extends ConsumerState<MainTabView>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Index 0: Feed (Friends)
+                        // Index 0: Feed (Friends Activity)
                         _buildFloatingNavItem(
                           index: 0,
                           icon: Icons.people_alt_rounded,

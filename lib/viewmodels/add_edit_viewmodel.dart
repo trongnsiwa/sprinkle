@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 import '../models/visit_record.dart';
 import '../services/database_service.dart';
@@ -120,6 +122,28 @@ class AddEditViewModel extends StateNotifier<AddEditState> {
         }
       }
 
+      double? latitude;
+      double? longitude;
+
+      try {
+        final query = state.name.trim();
+        if (query.isNotEmpty) {
+          final locations = await locationFromAddress(query);
+          if (locations.isNotEmpty) {
+            latitude = locations.first.latitude;
+            longitude = locations.first.longitude;
+          }
+        }
+      } catch (_) {
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(timeLimit: Duration(seconds: 3)),
+          );
+          latitude = pos.latitude;
+          longitude = pos.longitude;
+        } catch (_) {}
+      }
+
       final uuid = state.existingUuid ?? const Uuid().v4();
       final record = VisitRecord()
         ..uuid = uuid
@@ -128,6 +152,9 @@ class AddEditViewModel extends StateNotifier<AddEditState> {
         ..rating = state.rating
         ..timestamp = DateTime.now()
         ..imageFileName = imageFileName
+        ..address = state.name.trim()
+        ..latitude = latitude
+        ..longitude = longitude
         ..tags = state.tags;
 
       await DatabaseService.instance.saveVisit(record);

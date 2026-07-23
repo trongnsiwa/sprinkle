@@ -15,5 +15,7 @@ class VisitRecord {
   late DateTime timestamp;
   String? imageFileName;
   String? address;
+  double? latitude;
+  double? longitude;
   List<String> tags = [];
 }

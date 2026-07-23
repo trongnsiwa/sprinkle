@@ -72,5 +72,9 @@
 	<string>Sprinkle accesses your photo library to save and select memories.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Sprinkle needs microphone access for video recording.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sprinkle needs location access to map your memories.</string>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
 </dict>
 </plist>
