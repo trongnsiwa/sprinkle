@@ -34,7 +34,7 @@ class StarRating extends StatelessWidget {
           color = AppColors.starGold;
         } else {
           iconData = Icons.star_outline_rounded;
-          color = AppColors.neutralLight.withOpacity(0.4);
+          color = AppColors.neutralLight.withValues(alpha: 0.4);
         }
 
         Widget starWidget = Icon(

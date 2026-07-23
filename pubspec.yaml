@@ -32,7 +32,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^2.6.1
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   camera: ^0.12.0+2
@@ -43,13 +43,18 @@ dependencies:
   uuid: ^4.4.0
   path: ^1.9.0
   intl: ^0.20.3
+  confetti: ^0.7.0
+  geolocator: ^13.0.1
+  geocoding: ^3.0.0
+  shared_preferences: ^2.5.2
+  card_swiper: ^3.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
-  build_runner: ^2.4.9
+  build_runner: ^2.4.13
   isar_generator: ^3.1.0+1
 
 flutter:

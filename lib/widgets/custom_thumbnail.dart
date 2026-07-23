@@ -41,7 +41,7 @@ class CustomThumbnail extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.neutral.withOpacity(0.3),
+        color: AppColors.neutral.withValues(alpha: 0.3),
         shape: shape,
         borderRadius: isCircle ? null : r,
         border: effectiveBorder,
@@ -49,7 +49,7 @@ class CustomThumbnail extends StatelessWidget {
       child: Center(
         child: Icon(
           Icons.photo_camera_rounded,
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           size: size * 0.4,
         ),
       ),
@@ -102,10 +102,10 @@ class CustomThumbnail extends StatelessWidget {
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
-              color: AppColors.neutralLight.withOpacity(0.3),
+              color: AppColors.neutralLight.withValues(alpha: 0.3),
               child: Icon(
                 Icons.broken_image_rounded,
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 size: size * 0.4,
               ),
             );

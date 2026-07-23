@@ -2,13 +2,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:confetti/confetti.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/visit_record.dart';
 import '../utils/colors.dart';
 import '../utils/typography.dart';
 import '../viewmodels/add_edit_viewmodel.dart';
+import '../viewmodels/stats_viewmodel.dart';
 import '../viewmodels/visit_list_viewmodel.dart';
 import '../widgets/custom_thumbnail.dart';
-import '../widgets/star_rating.dart';
 
 class AddEditView extends ConsumerStatefulWidget {
   final VisitRecord? existingVisit;
@@ -28,10 +31,12 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
   late TextEditingController _nameController;
   late TextEditingController _notesController;
   late TextEditingController _tagsController;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
     _nameController = TextEditingController(text: widget.existingVisit?.name ?? '');
     _notesController = TextEditingController(text: widget.existingVisit?.notes ?? '');
     _tagsController = TextEditingController(
@@ -43,15 +48,58 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
             existingRecord: widget.existingVisit,
             initialCapturedImagePath: widget.initialCapturedImagePath,
           );
+      if (widget.existingVisit == null) {
+        _fetchLocation();
+      }
     });
   }
 
   @override
   void dispose() {
+    _confettiController.dispose();
     _nameController.dispose();
     _notesController.dispose();
     _tagsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 3),
+        ),
+      );
+
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty && mounted) {
+        final place = placemarks.first;
+        final parts = <String>[];
+        if (place.name != null && place.name!.isNotEmpty) parts.add(place.name!);
+        if (place.locality != null && place.locality!.isNotEmpty) parts.add(place.locality!);
+        final name = parts.join(', ');
+
+        if (_nameController.text.isEmpty && name.isNotEmpty) {
+          _nameController.text = name;
+          ref.read(addEditViewModelProvider.notifier).setName(name);
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -62,6 +110,74 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
     }
   }
 
+  Widget _buildVibeCheck(AddEditState state) {
+    final vibes = [
+      {'emoji': '🤯', 'value': 5.0},
+      {'emoji': '😍', 'value': 4.0},
+      {'emoji': '😐', 'value': 3.0},
+      {'emoji': '🤮', 'value': 1.0},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('VIBE CHECK', style: AppTypography.sectionTitle),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: vibes.map((vibe) {
+            final isSelected = state.rating == vibe['value'];
+            return GestureDetector(
+              onTap: () => ref
+                  .read(addEditViewModelProvider.notifier)
+                  .setRating(vibe['value'] as double),
+              child: AnimatedScale(
+                scale: isSelected ? 1.25 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.18)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(30),
+                    border: isSelected
+                        ? Border.all(color: AppColors.primary, width: 2)
+                        : Border.all(color: Colors.transparent, width: 2),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.25),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    vibe['emoji'] as String,
+                    style: const TextStyle(fontSize: 32),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
+        if (state.rating > 0)
+          Center(
+            child: Text(
+              '${state.rating.toStringAsFixed(1)} / 5.0',
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(addEditViewModelProvider);
@@ -69,11 +185,14 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
 
     final isEdit = widget.existingVisit != null;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30.0)), // rounded-xl
-      ),
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30.0)), // rounded-xl
+          ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
@@ -91,7 +210,7 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.neutralLight.withOpacity(0.3),
+                    color: AppColors.neutralLight.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -172,7 +291,7 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                             color: AppColors.neutralUltraLight,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.neutralLight.withOpacity(0.3),
+                              color: AppColors.neutralLight.withValues(alpha: 0.3),
                               style: BorderStyle.solid,
                             ),
                           ),
@@ -224,31 +343,15 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                     borderSide: BorderSide(color: AppColors.primary, width: 2),
                   ),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.neutralLight.withOpacity(0.3)),
+                    borderSide: BorderSide(color: AppColors.neutralLight.withValues(alpha: 0.3)),
                   ),
                 ),
                 onChanged: (val) => viewModel.setName(val),
               ),
               const SizedBox(height: 20),
 
-              // Rating Input
-              const Text('RATING', style: AppTypography.labelBold),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  StarRating(
-                    rating: state.rating,
-                    starSize: 32.0,
-                    isInteractive: true,
-                    onRatingChanged: (r) => viewModel.setRating(r),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    state.rating > 0 ? '${state.rating.toStringAsFixed(1)} / 5.0' : 'Select rating',
-                    style: AppTypography.bodySmall,
-                  ),
-                ],
-              ),
+              // Vibe Check Rating Input
+              _buildVibeCheck(state),
               const SizedBox(height: 20),
 
               // Tags Input
@@ -264,7 +367,7 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                     borderSide: BorderSide(color: AppColors.primary, width: 2),
                   ),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.neutralLight.withOpacity(0.3)),
+                    borderSide: BorderSide(color: AppColors.neutralLight.withValues(alpha: 0.3)),
                   ),
                 ),
                 onChanged: (val) => viewModel.parseAndSetTags(val),
@@ -287,7 +390,7 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: AppColors.neutralLight.withOpacity(0.3)),
+                    borderSide: BorderSide(color: AppColors.neutralLight.withValues(alpha: 0.3)),
                   ),
                 ),
                 onChanged: (val) => viewModel.setNotes(val),
@@ -301,16 +404,34 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                 child: ElevatedButton(
                   onPressed: state.isValid && !state.isSaving
                       ? () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final navigator = Navigator.of(context);
                           final savedRecord = await viewModel.save();
-                          if (savedRecord != null && context.mounted) {
+                          if (savedRecord != null && mounted) {
+                            _confettiController.play();
                             ref.read(visitListViewModelProvider.notifier).fetchVisits();
-                            Navigator.of(context).pop(savedRecord);
+                            ref.invalidate(todaySpotsProvider);
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, color: Colors.white),
+                                    SizedBox(width: 8),
+                                    Text('Collected! ✨', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                                backgroundColor: AppColors.primary,
+                                duration: Duration(milliseconds: 1200),
+                              ),
+                            );
+                            await Future.delayed(const Duration(milliseconds: 400));
+                            if (mounted) navigator.pop(savedRecord);
                           }
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+                    disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -332,6 +453,26 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
           ),
         ),
       ),
-    );
-  }
+    ),
+    Positioned(
+        top: 10,
+        child: ConfettiWidget(
+          confettiController: _confettiController,
+          blastDirectionality: BlastDirectionality.explosive,
+          colors: const [
+            AppColors.primary,
+            AppColors.secondary,
+            Color(0xFFFFD700),
+            Color(0xFFFF6B6B),
+            Color(0xFF4ECDC4),
+          ],
+          numberOfParticles: 35,
+          gravity: 0.25,
+        ),
+      ),
+    ],
+  );
 }
+}
+
+

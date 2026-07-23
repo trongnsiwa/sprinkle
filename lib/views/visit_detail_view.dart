@@ -124,7 +124,7 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
                   borderRadius: BorderRadius.circular(20.0), // rounded-lg
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: Colors.black.withValues(alpha: 0.12),
                       blurRadius: 10,
                       offset: const Offset(0, 6),
                     ),
@@ -176,7 +176,7 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withOpacity(0.2),
+                      color: AppColors.secondary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(9999), // Capsule
                     ),
                     child: Text(
@@ -203,7 +203,7 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
                   borderRadius: BorderRadius.circular(20.0),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 6,
                       offset: const Offset(0, 4),
                     ),

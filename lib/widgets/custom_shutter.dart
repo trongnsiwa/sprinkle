@@ -79,9 +79,9 @@ class _CustomShutterState extends State<CustomShutter>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
-                    blurRadius: 12,
-                    spreadRadius: 0,
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                    blurRadius: 20,
+                    spreadRadius: 2,
                     offset: Offset.zero,
                   ),
                 ],
@@ -96,6 +96,7 @@ class _CustomShutterState extends State<CustomShutter>
                   ),
                 ),
               ),
+
             ),
           );
         },

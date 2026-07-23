@@ -74,4 +74,25 @@ abstract class AppTypography {
     height: 16 / 12,
     color: AppColors.neutralLight,
   );
+
+  // --- NEW: Fashion‑Magazine Caps ---
+  static const TextStyle sectionTitle = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 13.0,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 2.5,
+    height: 1.2,
+    color: AppColors.neutralLight,
+  );
+
+  // --- NEW: Bold, playful number for badges ---
+  static const TextStyle badgeNumber = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 11.0,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 0.5,
+    height: 1.0,
+    color: Colors.white,
+  );
 }
+

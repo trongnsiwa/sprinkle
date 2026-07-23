@@ -2,17 +2,44 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/colors.dart';
-import '../utils/typography.dart';
 import 'camera_view.dart';
 import 'visit_list_view.dart';
 
 final currentTabProvider = StateProvider<int>((ref) => 1); // 1 = Camera (default)
 
-class MainTabView extends ConsumerWidget {
+class MainTabView extends ConsumerStatefulWidget {
   const MainTabView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainTabView> createState() => _MainTabViewState();
+}
+
+class _MainTabViewState extends ConsumerState<MainTabView>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _bounceController;
+  late Animation<double> _bounceAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    );
+    _bounceAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
+    );
+    _bounceController.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedIndex = ref.watch(currentTabProvider);
 
     final pages = [
@@ -23,100 +50,132 @@ class MainTabView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      extendBody: true,
-      body: IndexedStack(
-        index: selectedIndex,
-        children: pages,
-      ),
-      bottomNavigationBar: _buildGlassNavigationBar(context, ref, selectedIndex),
-    );
-  }
-
-  Widget _buildGlassNavigationBar(
-    BuildContext context,
-    WidgetRef ref,
-    int selectedIndex,
-  ) {
-    return Container(
-      color: Colors.transparent,
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.4),
-              border: Border(
-                top: BorderSide(
-                  color: Colors.white.withOpacity(0.1),
-                  width: 0.5,
-                ),
-              ),
+      body: Stack(
+        children: [
+          // Tab View Pages
+          Positioned.fill(
+            child: IndexedStack(
+              index: selectedIndex,
+              children: pages,
             ),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                height: 56,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(
-                      ref,
-                      index: 0,
-                      icon: Icons.people_alt_rounded,
-                      label: 'Friends',
-                      isSelected: selectedIndex == 0,
+          ),
+
+          // Floating Glass Capsule Navigation Bar
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 16.0 + MediaQuery.of(context).padding.bottom,
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    height: 64,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(40),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        width: 0.5,
+                      ),
                     ),
-                    _buildNavItem(
-                      ref,
-                      index: 1,
-                      icon: Icons.camera_alt_rounded,
-                      label: 'Camera',
-                      isSelected: selectedIndex == 1,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Index 0: Feed (Friends)
+                        _buildFloatingNavItem(
+                          index: 0,
+                          icon: Icons.people_alt_rounded,
+                          isSelected: selectedIndex == 0,
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Index 1: Bouncing Camera Island Button
+                        _buildCenterCameraItem(
+                          isSelected: selectedIndex == 1,
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Index 2: Memories
+                        _buildFloatingNavItem(
+                          index: 2,
+                          icon: Icons.grid_view_rounded,
+                          isSelected: selectedIndex == 2,
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      ref,
-                      index: 2,
-                      icon: Icons.grid_view_rounded,
-                      label: 'Memories',
-                      isSelected: selectedIndex == 2,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingNavItem({
+    required int index,
+    required IconData icon,
+    required bool isSelected,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        ref.read(currentTabProvider.notifier).state = index;
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Icon(
+          icon,
+          size: 24,
+          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(
-    WidgetRef ref, {
-    required int index,
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-  }) {
-    final color = isSelected ? AppColors.primary : AppColors.neutralLight;
-    return InkWell(
+  Widget _buildCenterCameraItem({required bool isSelected}) {
+    return GestureDetector(
       onTap: () {
-        ref.read(currentTabProvider.notifier).state = index;
+        ref.read(currentTabProvider.notifier).state = 1;
       },
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: color,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+      child: AnimatedBuilder(
+        animation: _bounceAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _bounceAnimation.value,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.camera_alt_rounded,
+                size: 22,
+                color: Colors.white,
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -128,7 +187,7 @@ class FriendsPlaceholderView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.neutralUltraLight,
+      color: Colors.black,
       child: SafeArea(
         child: Center(
           child: Column(
@@ -138,7 +197,7 @@ class FriendsPlaceholderView extends StatelessWidget {
                 width: 70,
                 height: 70,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.15),
+                  color: AppColors.primary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -150,12 +209,19 @@ class FriendsPlaceholderView extends StatelessWidget {
               const SizedBox(height: 16),
               const Text(
                 'Friends Feed',
-                style: AppTypography.headlineMedium,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Coming soon! Share memories with your friends.',
-                style: AppTypography.bodySmall,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 14,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

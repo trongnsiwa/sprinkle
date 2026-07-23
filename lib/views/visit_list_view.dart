@@ -48,9 +48,24 @@ class VisitListView extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Memories',
-                      style: AppTypography.displayLarge,
+                    Row(
+                      children: [
+                        if (Navigator.canPop(context)) ...[
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: AppColors.neutral,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        const Text(
+                          '📸 MEMORIES',
+                          style: AppTypography.displayLarge,
+                        ),
+                      ],
                     ),
                     IconButton(
                       onPressed: () => _openAddSheet(context),
@@ -86,7 +101,7 @@ class VisitListView extends ConsumerWidget {
                           Icon(
                             Icons.photo_library_outlined,
                             size: 64,
-                            color: AppColors.neutralLight.withOpacity(0.5),
+                            color: AppColors.neutralLight.withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 16),
                           const Text(
@@ -109,7 +124,7 @@ class VisitListView extends ConsumerWidget {
                   padding: const EdgeInsets.only(
                     left: 20,
                     right: 20,
-                    bottom: 100, // Space for bottom tab bar
+                    bottom: 32,
                   ),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
@@ -200,15 +215,12 @@ class VisitListView extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70), // Keep clear of glass tab bar
-        child: FloatingActionButton(
-          onPressed: () => _openAddSheet(context),
-          backgroundColor: AppColors.primary,
-          elevation: 4,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _openAddSheet(context),
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
       ),
     );
   }
@@ -234,7 +246,7 @@ class _MemoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.0), // rounded-lg
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 6,
               offset: const Offset(0, 4),
             ),
@@ -282,7 +294,7 @@ class _MemoryCard extends StatelessWidget {
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.secondary.withOpacity(0.2),
+                            color: AppColors.secondary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(9999),
                           ),
                           child: Text(

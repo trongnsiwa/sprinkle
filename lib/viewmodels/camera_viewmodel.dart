@@ -1,12 +1,17 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/database_service.dart';
 import '../services/image_service.dart';
 import '../services/permission_service.dart';
+import '../utils/constants.dart';
 
 class CameraState {
   final bool isAuthorized;
+  final bool isPermanentlyDenied;
+  final bool isMockMode;
   final bool isFlashOn;
   final bool isCameraInitialized;
   final bool isCapturing;
@@ -17,6 +22,8 @@ class CameraState {
 
   CameraState({
     this.isAuthorized = false,
+    this.isPermanentlyDenied = false,
+    this.isMockMode = kUseMockCamera,
     this.isFlashOn = false,
     this.isCameraInitialized = false,
     this.isCapturing = false,
@@ -28,6 +35,8 @@ class CameraState {
 
   CameraState copyWith({
     bool? isAuthorized,
+    bool? isPermanentlyDenied,
+    bool? isMockMode,
     bool? isFlashOn,
     bool? isCameraInitialized,
     bool? isCapturing,
@@ -38,6 +47,8 @@ class CameraState {
   }) {
     return CameraState(
       isAuthorized: isAuthorized ?? this.isAuthorized,
+      isPermanentlyDenied: isPermanentlyDenied ?? this.isPermanentlyDenied,
+      isMockMode: isMockMode ?? this.isMockMode,
       isFlashOn: isFlashOn ?? this.isFlashOn,
       isCameraInitialized: isCameraInitialized ?? this.isCameraInitialized,
       isCapturing: isCapturing ?? this.isCapturing,
@@ -54,23 +65,90 @@ class CameraViewModel extends StateNotifier<CameraState> {
   List<CameraDescription> _cameras = [];
 
   CameraViewModel() : super(CameraState()) {
-    checkPermission();
+    if (state.isMockMode) {
+      state = state.copyWith(
+        isAuthorized: true,
+        isCameraInitialized: true,
+      );
+    } else {
+      checkPermission();
+    }
     loadLatestThumbnail();
   }
 
+  void enableMockMode() {
+    state = state.copyWith(
+      isMockMode: true,
+      isAuthorized: true,
+      isCameraInitialized: true,
+    );
+  }
+
   Future<void> checkPermission() async {
-    final granted = await PermissionService.checkCameraPermission();
-    state = state.copyWith(isAuthorized: granted);
-    if (granted) {
+    if (state.isMockMode) {
+      state = state.copyWith(
+        isAuthorized: true,
+        isCameraInitialized: true,
+      );
+      return;
+    }
+    final status = await PermissionService.getCameraPermissionStatus();
+    print('[CameraViewModel] Camera permission status check: $status');
+    final isGranted = status.isGranted;
+    final isPermDenied = status.isPermanentlyDenied;
+    state = state.copyWith(
+      isAuthorized: isGranted,
+      isPermanentlyDenied: isPermDenied,
+    );
+    if (isGranted && !state.isCameraInitialized) {
       initCamera();
     }
   }
 
   Future<void> requestPermission() async {
-    final granted = await PermissionService.requestCameraPermission();
-    state = state.copyWith(isAuthorized: granted);
-    if (granted) {
+    if (state.isMockMode) {
+      state = state.copyWith(
+        isAuthorized: true,
+        isCameraInitialized: true,
+      );
+      return;
+    }
+    print('[CameraViewModel] User triggered requestPermission()');
+    final status = await PermissionService.requestCameraPermissionStatus();
+    print('[CameraViewModel] Permission request status: $status');
+    final isGranted = status.isGranted;
+    final isPermDenied = status.isPermanentlyDenied;
+    state = state.copyWith(
+      isAuthorized: isGranted,
+      isPermanentlyDenied: isPermDenied,
+    );
+    if (isGranted) {
       initCamera();
+    }
+  }
+
+  Future<void> openAppSettings() async {
+    await PermissionService.openSettings();
+  }
+
+  Future<void> reloadCamera() async {
+    if (state.isMockMode) {
+      state = state.copyWith(
+        isAuthorized: true,
+        isCameraInitialized: true,
+      );
+      return;
+    }
+    print('[CameraViewModel] Manual reload camera requested');
+    final status = await PermissionService.getCameraPermissionStatus();
+    print('[CameraViewModel] Camera status on reload: $status');
+    final isGranted = status.isGranted;
+    state = state.copyWith(
+      isAuthorized: isGranted,
+      isPermanentlyDenied: status.isPermanentlyDenied,
+    );
+    if (isGranted) {
+      await initCamera();
     }
   }
 
@@ -106,6 +184,28 @@ class CameraViewModel extends StateNotifier<CameraState> {
     }
   }
 
+  int _selectedCameraIndex = 0;
+
+  Future<void> switchCamera() async {
+    if (_cameras.length <= 1) return;
+    try {
+      _selectedCameraIndex = (_selectedCameraIndex + 1) % _cameras.length;
+      final camera = _cameras[_selectedCameraIndex];
+      if (controller != null) {
+        await controller!.dispose();
+      }
+      controller = CameraController(
+        camera,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      await controller!.initialize();
+      state = state.copyWith(isCameraInitialized: true);
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+    }
+  }
+
   Future<void> toggleFlash() async {
     if (controller == null || !state.isCameraInitialized) return;
     try {
@@ -119,7 +219,48 @@ class CameraViewModel extends StateNotifier<CameraState> {
     }
   }
 
+  Future<String?> pickImageFromGallery() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        state = state.copyWith(
+          capturedImagePath: pickedFile.path,
+          showingSheet: true,
+        );
+        return pickedFile.path;
+      }
+      return null;
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+      return null;
+    }
+  }
+
   Future<String?> capturePhoto() async {
+    if (state.isMockMode) {
+      try {
+        state = state.copyWith(isCapturing: true);
+        final picker = ImagePicker();
+        final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+        state = state.copyWith(isCapturing: false);
+        if (pickedFile != null) {
+          state = state.copyWith(
+            capturedImagePath: pickedFile.path,
+            showingSheet: true,
+          );
+          return pickedFile.path;
+        }
+        return null;
+      } catch (e) {
+        state = state.copyWith(
+          isCapturing: false,
+          errorMessage: e.toString(),
+        );
+        return null;
+      }
+    }
+
     if (controller == null || !state.isCameraInitialized || state.isCapturing) {
       return null;
     }
