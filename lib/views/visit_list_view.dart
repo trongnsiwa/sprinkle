@@ -6,6 +6,7 @@ import '../utils/date_formatter.dart';
 import '../utils/typography.dart';
 import '../viewmodels/visit_list_viewmodel.dart';
 import '../widgets/custom_thumbnail.dart';
+import '../widgets/sprinkle_button.dart';
 import '../widgets/star_rating.dart';
 import 'add_edit_view.dart';
 import 'visit_detail_view.dart';
@@ -113,6 +114,15 @@ class VisitListView extends ConsumerWidget {
                             'Snap a photo or tap + to create your first memory record.',
                             style: AppTypography.bodySmall,
                             textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: SprinkleButton(
+                              onPressed: () => _openAddSheet(context),
+                              label: 'Add First Memory',
+                              icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                            ),
                           ),
                         ],
                       ),

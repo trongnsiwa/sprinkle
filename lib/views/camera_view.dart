@@ -503,7 +503,7 @@ class _TopBar extends StatelessWidget {
                     );
                   },
                   loading: () => const SizedBox(width: 36),
-                  error: (_, __) => const SizedBox(width: 36),
+                  error: (_, _) => const SizedBox(width: 36),
                 );
               },
             ),
