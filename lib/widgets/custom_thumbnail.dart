@@ -35,7 +35,11 @@ class CustomThumbnail extends StatelessWidget {
     }
 
     final shape = isCircle ? BoxShape.circle : BoxShape.rectangle;
-    final r = isCircle ? BorderRadius.circular(size / 2) : BorderRadius.circular(borderRadius);
+    final r = isCircle
+        ? (size.isFinite ? BorderRadius.circular(size / 2) : BorderRadius.circular(50))
+        : BorderRadius.circular(borderRadius);
+
+    final double iconSize = size.isFinite ? size * 0.4 : 40.0;
 
     Widget placeholderWidget = Container(
       width: size,
@@ -50,18 +54,18 @@ class CustomThumbnail extends StatelessWidget {
         child: Icon(
           Icons.photo_camera_rounded,
           color: Colors.white.withValues(alpha: 0.3),
-          size: size * 0.4,
+          size: iconSize,
         ),
       ),
     );
 
     if (imageFile != null) {
-      return _buildImageContainer(imageFile!, shape, r, effectiveBorder);
+      return _buildImageContainer(imageFile!, shape, r, effectiveBorder, iconSize);
     }
 
     if (imagePath != null && imagePath!.isNotEmpty) {
       final file = File(imagePath!);
-      return _buildImageContainer(file, shape, r, effectiveBorder);
+      return _buildImageContainer(file, shape, r, effectiveBorder, iconSize);
     }
 
     if (imageFileName != null && imageFileName!.isNotEmpty) {
@@ -69,7 +73,7 @@ class CustomThumbnail extends StatelessWidget {
         future: ImageService.getImageFile(imageFileName!),
         builder: (context, snapshot) {
           if (snapshot.hasData && snapshot.data != null) {
-            return _buildImageContainer(snapshot.data!, shape, r, effectiveBorder);
+            return _buildImageContainer(snapshot.data!, shape, r, effectiveBorder, iconSize);
           }
           return placeholderWidget;
         },
@@ -84,6 +88,7 @@ class CustomThumbnail extends StatelessWidget {
     BoxShape shape,
     BorderRadius borderRadius,
     BoxBorder? border,
+    double iconSize,
   ) {
     return Container(
       width: size,
@@ -94,7 +99,9 @@ class CustomThumbnail extends StatelessWidget {
         border: border,
       ),
       child: ClipRRect(
-        borderRadius: isCircle ? BorderRadius.circular(size / 2) : borderRadius,
+        borderRadius: isCircle
+            ? (size.isFinite ? BorderRadius.circular(size / 2) : BorderRadius.circular(50))
+            : borderRadius,
         child: Image.file(
           file,
           width: size,
@@ -103,10 +110,12 @@ class CustomThumbnail extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) {
             return Container(
               color: AppColors.neutralLight.withValues(alpha: 0.3),
-              child: Icon(
-                Icons.broken_image_rounded,
-                color: Colors.white.withValues(alpha: 0.5),
-                size: size * 0.4,
+              child: Center(
+                child: Icon(
+                  Icons.broken_image_rounded,
+                  color: Colors.white.withValues(alpha: 0.5),
+                  size: iconSize,
+                ),
               ),
             );
           },
