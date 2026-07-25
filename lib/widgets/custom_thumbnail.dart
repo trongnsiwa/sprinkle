@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/image_service.dart';
-import '../utils/colors.dart';
 
 class CustomThumbnail extends StatelessWidget {
   final String? imageFileName;
@@ -41,21 +40,14 @@ class CustomThumbnail extends StatelessWidget {
 
     final double iconSize = size.isFinite ? size * 0.4 : 40.0;
 
-    Widget placeholderWidget = Container(
+    Widget darkBoxPlaceholder = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.neutral.withValues(alpha: 0.3),
+        color: const Color(0xFF1C1C1E),
         shape: shape,
         borderRadius: isCircle ? null : r,
         border: effectiveBorder,
-      ),
-      child: Center(
-        child: Icon(
-          Icons.photo_camera_rounded,
-          color: Colors.white.withValues(alpha: 0.3),
-          size: iconSize,
-        ),
       ),
     );
 
@@ -75,12 +67,12 @@ class CustomThumbnail extends StatelessWidget {
           if (snapshot.hasData && snapshot.data != null) {
             return _buildImageContainer(snapshot.data!, shape, r, effectiveBorder, iconSize);
           }
-          return placeholderWidget;
+          return darkBoxPlaceholder;
         },
       );
     }
 
-    return placeholderWidget;
+    return darkBoxPlaceholder;
   }
 
   Widget _buildImageContainer(
@@ -94,6 +86,7 @@ class CustomThumbnail extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
         shape: shape,
         borderRadius: isCircle ? null : borderRadius,
         border: border,
@@ -107,9 +100,18 @@ class CustomThumbnail extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded) return child;
+            return AnimatedOpacity(
+              opacity: frame == null ? 0 : 1,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              child: child,
+            );
+          },
           errorBuilder: (context, error, stackTrace) {
             return Container(
-              color: AppColors.neutralLight.withValues(alpha: 0.3),
+              color: const Color(0xFF1C1C1E),
               child: Center(
                 child: Icon(
                   Icons.broken_image_rounded,

@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/visit_record.dart';
+import '../services/image_service.dart';
 import '../utils/colors.dart';
 import '../utils/date_formatter.dart';
 import '../utils/typography.dart';
@@ -23,12 +25,42 @@ class VisitListView extends ConsumerWidget {
     );
   }
 
-  void _openDetail(BuildContext context, VisitRecord visit) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => VisitDetailView(visit: visit),
-      ),
-    );
+  void _openDetail(BuildContext context, VisitRecord visit) async {
+    File? imageFile;
+    if (visit.imageFileName != null && visit.imageFileName!.isNotEmpty) {
+      imageFile = await ImageService.getImageFile(visit.imageFileName!);
+      if (imageFile != null && context.mounted) {
+        await precacheImage(FileImage(imageFile), context);
+      }
+    }
+    if (context.mounted) {
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 250),
+          pageBuilder: (context, animation, secondaryAnimation) => VisitDetailView(
+            visit: visit,
+            resolvedImageFile: imageFile,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            );
+            return FadeTransition(
+              opacity: curvedAnimation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.05),
+                  end: Offset.zero,
+                ).animate(curvedAnimation),
+                child: child,
+              ),
+            );
+          },
+        ),
+      );
+    }
   }
 
   void _confirmDelete(BuildContext context, VisitListViewModel viewModel, VisitRecord visit) async {
@@ -284,73 +316,78 @@ class _GridMemoryTileState extends State<_GridMemoryTile> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: widget.onTap,
-      onLongPress: widget.onLongPress,
-      child: AnimatedScale(
-        scale: _isPressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12.0),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Full-bleed Image Background
-              CustomThumbnail(
-                imageFileName: widget.visit.imageFileName,
-                size: double.infinity,
-                borderRadius: 12.0,
-              ),
-
-              // Gradient Overlay
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.15),
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.85),
-                    ],
-                    stops: const [0.0, 0.45, 1.0],
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
+        child: AnimatedScale(
+          scale: _isPressed ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Full-bleed Image Background with Hero Animation
+                Hero(
+                  tag: 'memory_${widget.visit.uuid}',
+                  child: CustomThumbnail(
+                    imageFileName: widget.visit.imageFileName,
+                    size: double.infinity,
+                    borderRadius: 12.0,
                   ),
                 ),
-              ),
 
-              // Bottom Overlay Info (Place Name & Star Rating)
-              Positioned(
-                left: 6,
-                right: 6,
-                bottom: 6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.visit.name,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        shadows: const [
-                          Shadow(color: Colors.black87, blurRadius: 4),
-                        ],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                // Gradient Overlay
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.15),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.85),
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
                     ),
-                    if (widget.visit.rating > 0) ...[
-                      const SizedBox(height: 2),
-                      StarRating(rating: widget.visit.rating, starSize: 9.0),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+
+                // Bottom Overlay Info (Place Name & Star Rating)
+                Positioned(
+                  left: 6,
+                  right: 6,
+                  bottom: 6,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.visit.name,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          shadows: const [
+                            Shadow(color: Colors.black87, blurRadius: 4),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.visit.rating > 0) ...[
+                        const SizedBox(height: 2),
+                        StarRating(rating: widget.visit.rating, starSize: 9.0),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
