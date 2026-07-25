@@ -69,34 +69,27 @@ class _CustomShutterState extends State<CustomShutter>
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: Container(
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white,
-                  width: 4,
-                ),
+                color: AppColors.primary,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.5),
-                    blurRadius: 20,
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 16,
                     spreadRadius: 2,
                     offset: Offset.zero,
                   ),
                 ],
               ),
-              child: Center(
-                child: Container(
-                  width: 68,
-                  height: 68,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
+              child: const Center(
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                  size: 28,
                 ),
               ),
-
             ),
           );
         },

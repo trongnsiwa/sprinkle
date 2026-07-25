@@ -139,8 +139,6 @@ class _CameraViewState extends ConsumerState<CameraView>
     );
   }
 
-
-
   Widget _buildFriendItem(String name, String action, String time, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -311,13 +309,14 @@ class _CameraViewState extends ConsumerState<CameraView>
                     const SizedBox(height: 56), // Top bar space
                     const Spacer(),
 
-                    // Square 1:1 Preview Card
+                    // Square 1:1 Preview Card with Neutral Glow & No Border
                     SquarePreview(
                       controller: controller,
                       isInitialized: cameraState.isCameraInitialized,
                       isMockMode: cameraState.isMockMode,
                       width: squareSize,
                       borderRadius: 32.0,
+                      isCircle: false,
                       isFlashing: _isFlashing,
                       isFlashOn: cameraState.isFlashOn,
                       onFlashToggle: () => viewModel.toggleFlash(),
@@ -428,12 +427,12 @@ class _TopBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left: 36pt circular avatar (gradient ring, white person icon)
+            // Left: 40pt circular avatar (gradient ring, white person icon)
             GestureDetector(
               onTap: onAvatarTap,
               child: Container(
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(colors: AppColors.primaryGradient),
                   shape: BoxShape.circle,
@@ -441,13 +440,13 @@ class _TopBar extends StatelessWidget {
                 ),
                 child: const Icon(
                   Icons.person_rounded,
-                  size: 20,
+                  size: 22,
                   color: Colors.white,
                 ),
               ),
             ),
 
-            // Center: "Friends" label with a small red dot next to it (no pill background)
+            // Center: "Friends" label with a small red dot next to it (70% opacity)
             GestureDetector(
               onTap: onFriendsTap,
               child: Row(
@@ -456,8 +455,8 @@ class _TopBar extends StatelessWidget {
                   Text(
                     'Friends',
                     style: AppTypography.labelBold.copyWith(
-                      color: Colors.white,
-                      fontSize: 16,
+                      color: Colors.white.withValues(alpha: 0.70),
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -480,7 +479,7 @@ class _TopBar extends StatelessWidget {
                 final streakAsync = ref.watch(streakProvider);
                 return streakAsync.when(
                   data: (streak) {
-                    if (streak == 0) return const SizedBox(width: 36);
+                    if (streak == 0) return const SizedBox(width: 40);
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
@@ -502,8 +501,8 @@ class _TopBar extends StatelessWidget {
                       ),
                     );
                   },
-                  loading: () => const SizedBox(width: 36),
-                  error: (_, _) => const SizedBox(width: 36),
+                  loading: () => const SizedBox(width: 40),
+                  error: (_, _) => const SizedBox(width: 40),
                 );
               },
             ),
@@ -535,16 +534,15 @@ class _CameraActions extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left: 50pt circular photo picker / gallery thumbnail button with white border
+          // Left: 48pt circular photo picker / gallery icon button matching flip button
           GestureDetector(
             onTap: onGalleryTap,
             child: Container(
-              width: 50,
-              height: 50,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.15),
-                border: Border.all(color: Colors.white, width: 2.0),
+                color: Colors.white.withValues(alpha: 0.12),
               ),
               child: const Icon(
                 Icons.photo_library_rounded,
@@ -582,4 +580,3 @@ class _CameraActions extends StatelessWidget {
     );
   }
 }
-
