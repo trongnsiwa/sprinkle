@@ -7,6 +7,7 @@ import '../utils/typography.dart';
 import '../viewmodels/camera_viewmodel.dart';
 import '../viewmodels/streak_viewmodel.dart';
 import '../models/visit_record.dart';
+import '../providers/user_providers.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_shutter.dart';
 import '../widgets/friend_tile.dart';
@@ -451,7 +452,7 @@ class _CameraViewState extends ConsumerState<CameraView>
   }
 }
 
-class _TopBar extends StatelessWidget {
+class _TopBar extends ConsumerWidget {
   final bool isFriendsSheetOpen;
   final VoidCallback onAvatarTap;
   final VoidCallback onFriendsTap;
@@ -463,7 +464,14 @@ class _TopBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(currentUserProvider);
+    final avatarEmoji = userAsync.when(
+      data: (user) => user.avatar,
+      loading: () => '📸',
+      error: (err, stack) => '📸',
+    );
+
     return Container(
       color: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
@@ -472,7 +480,7 @@ class _TopBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left: 40pt circular avatar (gradient ring, white person icon)
+            // Left: 40pt circular avatar (gradient ring, white border, user emoji avatar)
             GestureDetector(
               onTap: onAvatarTap,
               child: Container(
@@ -483,10 +491,11 @@ class _TopBar extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  size: 22,
-                  color: Colors.white,
+                child: Center(
+                  child: Text(
+                    avatarEmoji,
+                    style: const TextStyle(fontSize: 20),
+                  ),
                 ),
               ),
             ),

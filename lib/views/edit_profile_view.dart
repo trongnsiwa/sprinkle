@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
+import '../providers/user_providers.dart';
 import '../utils/colors.dart';
 import '../utils/typography.dart';
 import '../viewmodels/profile_viewmodel.dart';
@@ -7,7 +9,7 @@ import '../widgets/sprinkle_button.dart';
 import '../widgets/sprinkle_text_field.dart';
 import '../widgets/sprinkle_toast.dart';
 
-class EditProfileView extends StatefulWidget {
+class EditProfileView extends ConsumerStatefulWidget {
   final User user;
   final ProfileViewModel viewModel;
 
@@ -18,10 +20,10 @@ class EditProfileView extends StatefulWidget {
   });
 
   @override
-  State<EditProfileView> createState() => _EditProfileViewState();
+  ConsumerState<EditProfileView> createState() => _EditProfileViewState();
 }
 
-class _EditProfileViewState extends State<EditProfileView> {
+class _EditProfileViewState extends ConsumerState<EditProfileView> {
   late TextEditingController _nameController;
   late TextEditingController _bioController;
   late String _selectedAvatar;
@@ -66,6 +68,8 @@ class _EditProfileViewState extends State<EditProfileView> {
       bio: _bioController.text.trim(),
       avatar: _selectedAvatar,
     );
+
+    ref.invalidate(currentUserProvider);
 
     if (mounted) {
       Navigator.maybePop(context);

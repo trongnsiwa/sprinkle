@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import '../models/visit_record.dart';
+import '../providers/user_providers.dart';
 import '../services/image_service.dart';
 import '../utils/colors.dart';
 import '../utils/date_formatter.dart';
@@ -38,7 +39,7 @@ class FeedCardData {
   final String? notes;
   final String timestampText;
   final String? imageFileName;
-  final IconData avatarIcon;
+  final String? avatarEmoji;
   final int? defaultLikes;
   final List<FeedComment>? defaultComments;
 
@@ -52,11 +53,12 @@ class FeedCardData {
     this.notes,
     required this.timestampText,
     this.imageFileName,
-    this.avatarIcon = Icons.person_rounded,
+    this.avatarEmoji = '📸',
     this.defaultLikes = 12,
     this.defaultComments = const [],
   });
 
+  String get safeAvatarEmoji => avatarEmoji ?? '📸';
   int get safeDefaultLikes => defaultLikes ?? 12;
   List<FeedComment> get safeDefaultComments => defaultComments ?? const [];
 }
@@ -86,7 +88,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
       rating: 4.8,
       notes: 'Best oat milk cortado in town! Cozy interior vibes ☕️✨',
       timestampText: '2h ago',
-      avatarIcon: Icons.coffee_rounded,
+      avatarEmoji: '☕',
       defaultLikes: 14,
       defaultComments: [
         FeedComment(
@@ -112,7 +114,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
       rating: 5.0,
       notes: 'Iced ceremonial matcha latte + coconut bowl! 🍵🥥',
       timestampText: '4h ago',
-      avatarIcon: Icons.local_drink_rounded,
+      avatarEmoji: '🍕',
       defaultLikes: 24,
       defaultComments: [
         FeedComment(
@@ -132,7 +134,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
       rating: 4.9,
       notes: 'Golden hour view was unreal today. Highly recommend visiting at 6 PM! 🌅',
       timestampText: '6h ago',
-      avatarIcon: Icons.wb_sunny_rounded,
+      avatarEmoji: '🌿',
       defaultLikes: 45,
       defaultComments: [
         FeedComment(
@@ -402,6 +404,12 @@ class _FeedViewState extends ConsumerState<FeedView> {
 
   List<FeedCardData> _buildCombinedFeed(List<VisitRecord> userVisits) {
     final List<FeedCardData> list = [];
+    final userAsync = ref.watch(currentUserProvider);
+    final userEmoji = userAsync.when(
+      data: (user) => user.avatar,
+      loading: () => '📸',
+      error: (err, stack) => '📸',
+    );
 
     for (final visit in userVisits) {
       list.add(
@@ -415,7 +423,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
           notes: visit.notes,
           timestampText: visit.timestamp.toFriendlyString(),
           imageFileName: visit.imageFileName,
-          avatarIcon: Icons.person_rounded,
+          avatarEmoji: userEmoji,
           defaultLikes: 8,
           defaultComments: [
             FeedComment(
@@ -497,8 +505,8 @@ class _FeedViewState extends ConsumerState<FeedView> {
                       children: [
                         CircleAvatar(
                           radius: 16,
-                          backgroundColor: AppColors.primary,
-                          child: Icon(item.avatarIcon, color: Colors.white, size: 18),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.25),
+                          child: Text(item.safeAvatarEmoji, style: const TextStyle(fontSize: 18)),
                         ),
                         const SizedBox(width: 8),
                         Column(
