@@ -139,6 +139,37 @@ class UserService {
     return mutualCount;
   }
 
+  /// Get list of mutual friend User objects for a specific user
+  Future<List<User>> getFriends(String userId) async {
+    final db = await DatabaseService.instance.isar;
+    final follows = await db.follows
+        .filter()
+        .followerIdEqualTo(userId)
+        .findAll();
+
+    final List<User> friends = [];
+    for (final follow in follows) {
+      final isMutual = await isFollowing(follow.followeeId, userId);
+      if (isMutual) {
+        final friend = await getUserByUuid(follow.followeeId);
+        if (friend != null) {
+          friends.add(friend);
+        }
+      }
+    }
+    return friends;
+  }
+
+  /// Get latest visit record for a user
+  Future<VisitRecord?> getLatestMemoryForUser(String userId) async {
+    final db = await DatabaseService.instance.isar;
+    return await db.visitRecords
+        .filter()
+        .userIdEqualTo(userId)
+        .sortByTimestampDesc()
+        .findFirst();
+  }
+
   /// Get followers count
   Future<int> getFollowersCount(String userId) async {
     final db = await DatabaseService.instance.isar;

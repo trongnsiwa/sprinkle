@@ -6,8 +6,10 @@ import '../utils/colors.dart';
 import '../utils/typography.dart';
 import '../viewmodels/camera_viewmodel.dart';
 import '../viewmodels/streak_viewmodel.dart';
+import '../models/visit_record.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_shutter.dart';
+import '../widgets/friend_tile.dart';
 import '../widgets/sprinkle_toast.dart';
 import '../widgets/square_preview.dart';
 import 'add_edit_view.dart';
@@ -82,47 +84,110 @@ class _CameraViewState extends ConsumerState<CameraView>
       _isFriendsSheetOpen = true;
     });
 
+    final currentUser = await UserService.instance.getOrCreateCurrentUser();
+    final friends = await UserService.instance.getFriends(currentUser.uuid);
+
+    final Map<String, VisitRecord?> latestMemories = {};
+    for (final friend in friends) {
+      latestMemories[friend.uuid] =
+          await UserService.instance.getLatestMemoryForUser(friend.uuid);
+    }
+
+    if (!mounted) return;
+
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => BackdropFilter(
+      isScrollControlled: true,
+      builder: (modalContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Material(
           color: const Color(0xFF1C1C1E),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '👥 FRIENDS (${friends.length})',
+                        style: AppTypography.sectionTitle,
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.maybePop(modalContext),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  if (friends.isEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Text('👥', style: TextStyle(fontSize: 44)),
+                    const SizedBox(height: 12),
                     const Text(
-                      '👥 FRIENDS',
-                      style: AppTypography.sectionTitle,
+                      'No friends yet',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Follow others to see their memories here.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
+                    const SizedBox(height: 24),
+                  ] else ...[
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.45,
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: friends.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 4),
+                        itemBuilder: (context, index) {
+                          final friend = friends[index];
+                          final memory = latestMemories[friend.uuid];
+                          return FriendTile(
+                            user: friend,
+                            latestMemory: memory,
+                            onTap: () {
+                              Navigator.maybePop(modalContext);
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ProfileView(userId: friend.uuid),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                   ],
-                ),
-                const SizedBox(height: 12),
-                _buildFriendItem('Alex', 'Shared a new memory', '10m ago', Icons.face_rounded),
-                _buildFriendItem('Taylor', 'Visited Central Park', '1h ago', Icons.face_3_rounded),
-                _buildFriendItem('Jordan', 'Reacted to your memory', '3h ago', Icons.face_6_rounded),
-                const SizedBox(height: 16),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -139,31 +204,6 @@ class _CameraViewState extends ConsumerState<CameraView>
   void _openExplore() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const ExploreView()),
-    );
-  }
-
-  Widget _buildFriendItem(String name, String action, String time, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppColors.primary.withValues(alpha: 0.20),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: AppTypography.bodyLarge.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                Text(action, style: AppTypography.caption.copyWith(color: Colors.white70)),
-              ],
-            ),
-          ),
-          Text(time, style: AppTypography.caption.copyWith(color: Colors.white38)),
-        ],
-      ),
     );
   }
 
