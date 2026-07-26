@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../models/visit_record.dart';
+import '../services/supabase_service.dart';
 import '../services/user_service.dart';
 
 class ProfileState {
@@ -129,6 +130,13 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       ..avatar = avatar;
 
     await _userService.updateUser(user);
+    try {
+      await SupabaseService.instance.updateProfile(
+        name: name,
+        bio: bio,
+        avatar: avatar,
+      );
+    } catch (_) {}
     await loadProfile();
   }
 }

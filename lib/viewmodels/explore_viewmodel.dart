@@ -1,51 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/spot.dart';
+import '../services/database_service.dart';
 
 final exploreSpotsProvider = StateNotifierProvider<ExploreViewModel, List<Spot>>((ref) {
   return ExploreViewModel();
 });
 
 class ExploreViewModel extends StateNotifier<List<Spot>> {
-  ExploreViewModel() : super(_generateMockSpots());
+  ExploreViewModel() : super([]) {
+    loadSpots();
+  }
 
-  static List<Spot> _generateMockSpots() {
-    return [
-      Spot(
-        id: '1',
-        name: 'The Coffee Collective',
-        rating: 4.8,
-        friendName: 'Alex',
-        friendAvatar: '🧑‍🎤',
-      ),
-      Spot(
-        id: '2',
-        name: 'Hanoi Social Club',
-        rating: 4.6,
-        friendName: 'Taylor',
-        friendAvatar: '🧑‍💻',
-      ),
-      Spot(
-        id: '3',
-        name: 'Craft Beer Pub',
-        rating: 4.3,
-        friendName: 'Jordan',
-        friendAvatar: '🧑‍🍳',
-      ),
-      Spot(
-        id: '4',
-        name: 'Hidden Speakeasy',
-        rating: 4.9,
-        friendName: 'Sam',
-        friendAvatar: '🧑‍🎓',
-      ),
-      Spot(
-        id: '5',
-        name: 'Sunset Rooftop',
-        rating: 4.7,
-        friendName: 'Morgan',
-        friendAvatar: '🧑‍✈️',
-      ),
-    ];
+  Future<void> loadSpots() async {
+    final visits = await DatabaseService.instance.getAllVisits();
+    final spots = visits.map((v) => Spot(
+      id: v.uuid,
+      name: v.name,
+      rating: v.rating,
+      friendName: 'Spot',
+      friendAvatar: '✨',
+    )).toList();
+
+    state = spots;
   }
 
   void swipeRight(String id) {
@@ -61,6 +37,6 @@ class ExploreViewModel extends StateNotifier<List<Spot>> {
   }
 
   void reset() {
-    state = _generateMockSpots();
+    loadSpots();
   }
 }

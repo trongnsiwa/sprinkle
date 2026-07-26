@@ -157,36 +157,71 @@ class VisitListView extends ConsumerWidget {
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.photo_library_outlined,
-                          size: 64,
-                          color: Colors.white38,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No memories yet',
-                          style: AppTypography.headlineMedium.copyWith(color: Colors.white),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Snap a photo or tap + to create your first memory record.',
-                          style: AppTypography.bodySmall.copyWith(color: Colors.white60),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: SprinkleButton(
-                            onPressed: () => _openAddSheet(context),
-                            label: 'Add First Memory',
-                            isDark: true,
-                            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // 1. Icon Container with Primary Glow
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.25),
+                                  blurRadius: 24,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.photo_library_rounded,
+                                size: 40,
+                                color: Colors.white60,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 24),
+
+                          // 2. Typography
+                          Text(
+                            'No memories yet',
+                            style: AppTypography.headlineMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Capture your first memory to start your journal.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: Colors.white70,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // 3. CTA Button
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: SprinkleButton(
+                              onPressed: () => _openAddSheet(context),
+                              label: 'Add First Memory',
+                              isDark: true,
+                              icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

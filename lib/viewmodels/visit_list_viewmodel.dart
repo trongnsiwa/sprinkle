@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/visit_record.dart';
 import '../services/database_service.dart';
 import '../services/image_service.dart';
+import '../services/supabase_service.dart';
 
 class VisitListState {
   final List<VisitRecord> visits;
@@ -50,6 +51,9 @@ class VisitListViewModel extends StateNotifier<VisitListState> {
       }
       final success = await DatabaseService.instance.deleteVisit(uuid);
       if (success) {
+        try {
+          await SupabaseService.instance.deleteMemory(uuid);
+        } catch (_) {}
         await fetchVisits();
       }
       return success;

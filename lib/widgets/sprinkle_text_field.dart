@@ -21,6 +21,7 @@ class SprinkleTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final List<Widget>? chips;
   final bool isDark;
+  final bool obscureText;
 
   const SprinkleTextField({
     super.key,
@@ -39,6 +40,7 @@ class SprinkleTextField extends StatefulWidget {
     this.suffixIcon,
     this.chips,
     this.isDark = true,
+    this.obscureText = false,
   });
 
   @override
@@ -192,6 +194,7 @@ class _SprinkleTextFieldState extends State<SprinkleTextField> {
                                 keyboardType: widget.keyboardType,
                                 textInputAction: widget.textInputAction,
                                 onSubmitted: widget.onSubmitted,
+                                obscureText: widget.obscureText,
                                 style: AppTypography.bodyLarge.copyWith(color: textColor),
                                 buildCounter: widget.maxLength != null
                                     ? (context, {required currentLength, required isFocused, maxLength}) =>
@@ -221,6 +224,12 @@ class _SprinkleTextFieldState extends State<SprinkleTextField> {
                                   hintText: widget.hint,
                                   hintStyle: AppTypography.bodyLarge.copyWith(color: hintColor),
                                   contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                                  suffixIconConstraints: const BoxConstraints(
+                                    minWidth: 24,
+                                    minHeight: 24,
+                                    maxWidth: 32,
+                                    maxHeight: 32,
+                                  ),
                                   suffixIcon: widget.suffixIcon,
                                 ),
                               ),

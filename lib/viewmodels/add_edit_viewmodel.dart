@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../models/visit_record.dart';
 import '../services/database_service.dart';
 import '../services/image_service.dart';
+import '../services/supabase_service.dart';
 
 class AddEditState {
   final String? existingUuid;
@@ -158,6 +159,20 @@ class AddEditViewModel extends StateNotifier<AddEditState> {
         ..tags = state.tags;
 
       await DatabaseService.instance.saveVisit(record);
+
+      // Background Supabase Storage & Database Sync
+      try {
+        String? downloadUrl;
+        if (state.selectedImagePath != null && state.selectedImagePath!.isNotEmpty) {
+          final file = File(state.selectedImagePath!);
+          if (await file.exists()) {
+            downloadUrl = await SupabaseService.instance.uploadMemoryImage(file, record.uuid);
+          }
+        }
+
+        await SupabaseService.instance.uploadMemory(record, imageUrl: downloadUrl);
+      } catch (_) {}
+
       state = state.copyWith(isSaving: false);
       return record;
     } catch (e) {
