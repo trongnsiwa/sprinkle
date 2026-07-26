@@ -7,6 +7,7 @@ import '../utils/typography.dart';
 import '../viewmodels/camera_viewmodel.dart';
 import '../viewmodels/streak_viewmodel.dart';
 import '../widgets/custom_shutter.dart';
+import '../widgets/sprinkle_toast.dart';
 import '../widgets/square_preview.dart';
 import 'add_edit_view.dart';
 import 'explore_view.dart';
@@ -109,7 +110,7 @@ class _CameraViewState extends ConsumerState<CameraView>
                       style: AppTypography.sectionTitle,
                     ),
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.maybePop(context),
                       icon: const Icon(Icons.close_rounded, color: Colors.white70),
                     ),
                   ],
@@ -165,11 +166,11 @@ class _CameraViewState extends ConsumerState<CameraView>
   }
 
   void _openProfileModal() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile feature coming soon!'),
-        duration: Duration(seconds: 2),
-      ),
+    SprinkleToast.show(
+      context,
+      'Profile feature coming soon!',
+      type: ToastType.info,
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -343,11 +344,11 @@ class _CameraViewState extends ConsumerState<CameraView>
                       },
                       onCameraSwitchTap: () {
                         if (cameraState.isMockMode) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Switched camera mode!'),
-                              duration: Duration(seconds: 1),
-                            ),
+                          SprinkleToast.show(
+                            context,
+                            'Switched camera mode!',
+                            type: ToastType.neutral,
+                            duration: const Duration(seconds: 1),
                           );
                         } else {
                           viewModel.switchCamera();

@@ -10,6 +10,7 @@ import '../utils/typography.dart';
 import '../viewmodels/visit_list_viewmodel.dart';
 import '../widgets/custom_thumbnail.dart';
 import '../widgets/star_rating.dart';
+import '../widgets/sprinkle_toast.dart';
 import 'add_edit_view.dart';
 
 class VisitDetailView extends ConsumerStatefulWidget {
@@ -85,11 +86,11 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.maybePop(context, false),
             child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.maybePop(context, true),
             child: const Text('Delete', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -99,7 +100,7 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
     if (confirm == true && mounted) {
       await ref.read(visitListViewModelProvider.notifier).deleteVisit(_currentVisit.uuid);
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.maybePop(context);
       }
     }
   }
@@ -114,15 +115,19 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch maps application')),
+          SprinkleToast.show(
+            context,
+            'Could not launch maps application',
+            type: ToastType.error,
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error launching maps: $e')),
+        SprinkleToast.show(
+          context,
+          'Error launching maps: $e',
+          type: ToastType.error,
         );
       }
     }
@@ -144,7 +149,7 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () => Navigator.maybePop(context),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.45),

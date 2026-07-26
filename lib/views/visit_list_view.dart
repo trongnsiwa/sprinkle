@@ -78,11 +78,11 @@ class VisitListView extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.maybePop(context, false),
             child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.maybePop(context, true),
             child: const Text('Delete', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -126,24 +126,9 @@ class VisitListView extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          if (Navigator.canPop(context)) ...[
-                            IconButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              icon: const Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                          ],
-                          Text(
-                            '📸 MEMORIES',
-                            style: AppTypography.displayLarge.copyWith(color: Colors.white),
-                          ),
-                        ],
+                      Text(
+                        '📸 MEMORIES',
+                        style: AppTypography.displayLarge.copyWith(color: Colors.white),
                       ),
                       IconButton(
                         onPressed: () => _openAddSheet(context),

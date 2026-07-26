@@ -14,6 +14,7 @@ import '../viewmodels/visit_list_viewmodel.dart';
 import '../widgets/custom_thumbnail.dart';
 import '../widgets/sprinkle_button.dart';
 import '../widgets/sprinkle_text_field.dart';
+import '../widgets/sprinkle_toast.dart';
 import '../widgets/vibe_picker.dart';
 
 class AddEditView extends ConsumerStatefulWidget {
@@ -136,7 +137,7 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
               leading: const Icon(Icons.camera_alt_rounded, color: Colors.white),
               title: const Text('Take Photo', style: TextStyle(color: Colors.white)),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.maybePop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
@@ -144,7 +145,7 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
               leading: const Icon(Icons.photo_library_rounded, color: Colors.white),
               title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white)),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.maybePop(context);
                 _pickImage(ImageSource.gallery);
               },
             ),
@@ -231,7 +232,7 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                               ),
                             ),
                             IconButton(
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => Navigator.maybePop(context),
                               icon: const Icon(Icons.close_rounded, color: Colors.white70),
                             ),
                           ],
@@ -410,34 +411,27 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                                 ? const Icon(Icons.check_circle_rounded, color: Colors.white, size: 22)
                                 : null,
                             onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final navigator = Navigator.of(context);
                               final savedRecord = await viewModel.save();
-                              if (savedRecord != null && mounted) {
+                              if (!mounted) return;
+                              if (savedRecord != null) {
                                 setState(() {
                                   _showSavedSuccess = true;
                                 });
                                 _confettiController.play();
                                 ref.read(visitListViewModelProvider.notifier).fetchVisits();
                                 ref.invalidate(todaySpotsProvider);
-                                messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Row(
-                                      children: [
-                                        Icon(Icons.check_circle_rounded, color: Colors.white),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Collected! ✨',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                    backgroundColor: AppColors.primary,
-                                    duration: Duration(milliseconds: 1200),
-                                  ),
-                                );
+                                if (context.mounted) {
+                                  SprinkleToast.show(
+                                    context,
+                                    'Collected! ✨',
+                                    type: ToastType.success,
+                                    duration: const Duration(milliseconds: 1200),
+                                  );
+                                }
                                 await Future.delayed(const Duration(milliseconds: 500));
-                                if (mounted) navigator.pop(savedRecord);
+                                if (context.mounted) {
+                                  Navigator.maybePop(context, savedRecord);
+                                }
                               }
                             },
                           ),

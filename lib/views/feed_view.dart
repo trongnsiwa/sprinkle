@@ -11,6 +11,7 @@ import '../utils/date_formatter.dart';
 import '../utils/typography.dart';
 import '../viewmodels/visit_list_viewmodel.dart';
 import '../widgets/star_rating.dart';
+import '../widgets/sprinkle_toast.dart';
 
 class FeedComment {
   final String id;
@@ -181,15 +182,19 @@ class _FeedViewState extends ConsumerState<FeedView> {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch Google Maps')),
+          SprinkleToast.show(
+            context,
+            'Could not launch Google Maps',
+            type: ToastType.error,
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error launching maps: $e')),
+        SprinkleToast.show(
+          context,
+          'Error launching maps: $e',
+          type: ToastType.error,
         );
       }
     }
@@ -197,11 +202,11 @@ class _FeedViewState extends ConsumerState<FeedView> {
 
   void _shareMemory(String placeName) {
     HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Shared "$placeName" memory!'),
-        duration: const Duration(seconds: 1),
-      ),
+    SprinkleToast.show(
+      context,
+      'Shared "$placeName" memory!',
+      type: ToastType.success,
+      duration: const Duration(seconds: 1),
     );
   }
 
@@ -256,7 +261,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.close_rounded, color: Colors.white70),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.maybePop(context),
                       ),
                     ],
                   ),
