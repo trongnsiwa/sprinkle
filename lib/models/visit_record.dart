@@ -18,4 +18,7 @@ class VisitRecord {
   double? latitude;
   double? longitude;
   List<String> tags = [];
+  
+  @Index()
+  String? userId;
 }

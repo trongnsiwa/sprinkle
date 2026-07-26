@@ -1,5 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import '../models/follow.dart';
+import '../models/user.dart';
 import '../models/visit_record.dart';
 
 class DatabaseService {
@@ -25,9 +27,14 @@ class DatabaseService {
     if (_isar != null && _isar!.isOpen) {
       return _isar!;
     }
+    final existing = Isar.getInstance();
+    if (existing != null && existing.isOpen) {
+      _isar = existing;
+      return _isar!;
+    }
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
-      [VisitRecordSchema],
+      [VisitRecordSchema, UserSchema, FollowSchema],
       directory: dir.path,
     );
     return _isar!;

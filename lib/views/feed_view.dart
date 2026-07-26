@@ -12,6 +12,7 @@ import '../utils/typography.dart';
 import '../viewmodels/visit_list_viewmodel.dart';
 import '../widgets/star_rating.dart';
 import '../widgets/sprinkle_toast.dart';
+import 'profile_view.dart';
 
 class FeedComment {
   final String id;
@@ -29,6 +30,7 @@ class FeedComment {
 
 class FeedCardData {
   final String id;
+  final String userId;
   final String authorName;
   final String placeName;
   final String? address;
@@ -42,6 +44,7 @@ class FeedCardData {
 
   FeedCardData({
     required this.id,
+    this.userId = 'user_me',
     required this.authorName,
     required this.placeName,
     this.address,
@@ -76,6 +79,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
   final List<FeedCardData> _mockCards = [
     FeedCardData(
       id: 'mock_1',
+      userId: 'user_alex',
       authorName: 'Alex Rivers',
       placeName: 'The Coffee Collective',
       address: 'The Coffee Collective',
@@ -101,6 +105,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
     ),
     FeedCardData(
       id: 'mock_2',
+      userId: 'user_jordan',
       authorName: 'Jordan Lee',
       placeName: 'Matcha Mama Cafe',
       address: 'Matcha Mama Cafe',
@@ -120,6 +125,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
     ),
     FeedCardData(
       id: 'mock_3',
+      userId: 'user_taylor',
       authorName: 'Taylor Swift',
       placeName: 'Sunset Vista Overlook',
       address: 'Sunset Vista Overlook',
@@ -401,6 +407,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
       list.add(
         FeedCardData(
           id: visit.uuid,
+          userId: 'user_me',
           authorName: 'You',
           placeName: visit.name,
           address: visit.address ?? visit.name,
@@ -477,32 +484,42 @@ class _FeedViewState extends ConsumerState<FeedView> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Left: CircleAvatar + Name + Time
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: AppColors.primary,
-                        child: Icon(item.avatarIcon, color: Colors.white, size: 18),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.authorName,
-                            style: AppTypography.labelBold.copyWith(
-                              color: Colors.white,
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ProfileView(userId: item.userId),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: AppColors.primary,
+                          child: Icon(item.avatarIcon, color: Colors.white, size: 18),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.authorName,
+                              style: AppTypography.labelBold.copyWith(
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          Text(
-                            item.timestampText,
-                            style: AppTypography.caption.copyWith(
-                              color: Colors.white.withValues(alpha: 0.7),
+                            Text(
+                              item.timestampText,
+                              style: AppTypography.caption.copyWith(
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
 
                   // Right: Share & Maps Icon Buttons

@@ -6,11 +6,13 @@ import '../utils/colors.dart';
 import '../utils/typography.dart';
 import '../viewmodels/camera_viewmodel.dart';
 import '../viewmodels/streak_viewmodel.dart';
+import '../services/user_service.dart';
 import '../widgets/custom_shutter.dart';
 import '../widgets/sprinkle_toast.dart';
 import '../widgets/square_preview.dart';
 import 'add_edit_view.dart';
 import 'explore_view.dart';
+import 'profile_view.dart';
 
 class CameraView extends ConsumerStatefulWidget {
   const CameraView({super.key});
@@ -165,13 +167,15 @@ class _CameraViewState extends ConsumerState<CameraView>
     );
   }
 
-  void _openProfileModal() {
-    SprinkleToast.show(
-      context,
-      'Profile feature coming soon!',
-      type: ToastType.info,
-      duration: const Duration(seconds: 2),
-    );
+  void _openProfileModal() async {
+    final user = await UserService.instance.getOrCreateCurrentUser();
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ProfileView(userId: user.uuid),
+        ),
+      );
+    }
   }
 
   @override
