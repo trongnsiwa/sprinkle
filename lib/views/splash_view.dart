@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/user_service.dart';
 import '../utils/colors.dart';
 import '../utils/typography.dart';
+import '../widgets/sprinkle_logo.dart';
 import 'auth/login_view.dart';
 import 'main_tab_view.dart';
 
@@ -47,26 +48,7 @@ class _SplashViewState extends State<SplashView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 84,
-              height: 84,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: AppColors.primaryGradient,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.45),
-                    blurRadius: 24,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text('✨', style: TextStyle(fontSize: 42)),
-              ),
-            ),
+            const SprinkleLogo(size: 120),
             const SizedBox(height: 24),
             Text(
               'Sprinkle',

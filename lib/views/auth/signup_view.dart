@@ -4,6 +4,7 @@ import '../../services/user_service.dart';
 import '../../utils/colors.dart';
 import '../../utils/typography.dart';
 import '../../widgets/sprinkle_button.dart';
+import '../../widgets/sprinkle_logo.dart';
 import '../../widgets/sprinkle_text_field.dart';
 import '../../widgets/sprinkle_toast.dart';
 import '../main_tab_view.dart';
@@ -112,6 +113,10 @@ class _SignupViewState extends State<SignupView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Center(
+                child: SprinkleLogo(size: 80),
+              ),
+              const SizedBox(height: 16),
               Text(
                 'Create Account',
                 style: AppTypography.displayLarge.copyWith(color: Colors.white),

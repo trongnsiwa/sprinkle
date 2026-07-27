@@ -4,6 +4,7 @@ import '../../services/user_service.dart';
 import '../../utils/colors.dart';
 import '../../utils/typography.dart';
 import '../../widgets/sprinkle_button.dart';
+import '../../widgets/sprinkle_logo.dart';
 import '../../widgets/sprinkle_text_field.dart';
 import '../../widgets/sprinkle_toast.dart';
 import '../main_tab_view.dart';
@@ -95,27 +96,8 @@ class _LoginViewState extends State<LoginView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 32),
-              Center(
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: AppColors.primaryGradient,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text('✨', style: TextStyle(fontSize: 36)),
-                  ),
-                ),
+              const Center(
+                child: SprinkleLogo(size: 80),
               ),
               const SizedBox(height: 24),
               Text(
