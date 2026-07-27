@@ -7,6 +7,7 @@ import '../models/visit_record.dart';
 import '../services/database_service.dart';
 import '../services/image_service.dart';
 import '../services/supabase_service.dart';
+import '../services/user_service.dart';
 
 class AddEditState {
   final String? existingUuid;
@@ -146,8 +147,12 @@ class AddEditViewModel extends StateNotifier<AddEditState> {
       }
 
       final uuid = state.existingUuid ?? const Uuid().v4();
+      final currentUser = await UserService.instance.getOrCreateCurrentUser();
+      final userId = SupabaseService.instance.currentUser?.id ?? currentUser.uuid;
+
       final record = VisitRecord()
         ..uuid = uuid
+        ..userId = userId
         ..name = state.name.trim()
         ..notes = state.notes.trim().isEmpty ? null : state.notes.trim()
         ..rating = state.rating

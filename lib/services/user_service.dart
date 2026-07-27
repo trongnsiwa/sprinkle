@@ -4,6 +4,7 @@ import '../models/follow.dart';
 import '../models/user.dart';
 import '../models/visit_record.dart';
 import 'database_service.dart';
+import 'supabase_service.dart';
 
 class UserService {
   static UserService? _instance;
@@ -18,10 +19,79 @@ class UserService {
   /// Get or create the primary local user ("You")
   Future<User> getOrCreateCurrentUser() async {
     final db = await DatabaseService.instance.isar;
-    var user = await db.users.filter().isCurrentUserEqualTo(true).findFirst();
+    final sbUser = SupabaseService.instance.currentUser;
+
+    if (sbUser != null) {
+      final targetUuid = sbUser.id;
+      var user = await db.users.filter().uuidEqualTo(targetUuid).findFirst();
+
+      if (user == null) {
+        // Check if old 'user_me' exists to migrate
+        final oldMe = await db.users.filter().uuidEqualTo('user_me').findFirst();
+
+        final newUser = User()
+          ..uuid = targetUuid
+          ..name = sbUser.userMetadata?['name'] ?? oldMe?.name ?? 'You'
+          ..avatar = sbUser.userMetadata?['avatar'] ?? oldMe?.avatar ?? '📸'
+          ..bio = oldMe?.bio ?? 'Capturing everyday coffee & moments ✨'
+          ..createdAt = oldMe?.createdAt ?? DateTime.now()
+          ..isCurrentUser = true;
+
+        await db.writeTxn(() async {
+          // Unset isCurrentUser on any other user records
+          final currentUsers = await db.users.filter().isCurrentUserEqualTo(true).findAll();
+          for (final u in currentUsers) {
+            u.isCurrentUser = false;
+            await db.users.put(u);
+          }
+
+          await db.users.put(newUser);
+
+          // Migrate VisitRecord and Follow entries from 'user_me' to targetUuid
+          if (oldMe != null) {
+            final visitsToMigrate = await db.visitRecords.filter().userIdEqualTo('user_me').or().userIdIsNull().findAll();
+            for (final visit in visitsToMigrate) {
+              visit.userId = targetUuid;
+              await db.visitRecords.put(visit);
+            }
+
+            final followsAsFollower = await db.follows.filter().followerIdEqualTo('user_me').findAll();
+            for (final f in followsAsFollower) {
+              f.followerId = targetUuid;
+              await db.follows.put(f);
+            }
+
+            final followsAsFollowee = await db.follows.filter().followeeIdEqualTo('user_me').findAll();
+            for (final f in followsAsFollowee) {
+              f.followeeId = targetUuid;
+              await db.follows.put(f);
+            }
+
+            await db.users.delete(oldMe.id);
+          }
+        });
+        return newUser;
+      } else {
+        if (!user.isCurrentUser) {
+          await db.writeTxn(() async {
+            final currentUsers = await db.users.filter().isCurrentUserEqualTo(true).findAll();
+            for (final u in currentUsers) {
+              u.isCurrentUser = false;
+              await db.users.put(u);
+            }
+            user.isCurrentUser = true;
+            await db.users.put(user);
+          });
+        }
+        return user;
+      }
+    }
+
+    // Guest mode: fallback to 'user_me'
+    final user = await db.users.filter().uuidEqualTo('user_me').findFirst();
 
     if (user == null) {
-      user = User()
+      final guestUser = User()
         ..uuid = 'user_me'
         ..name = 'You'
         ..avatar = '📸'
@@ -30,14 +100,21 @@ class UserService {
         ..isCurrentUser = true;
 
       await db.writeTxn(() async {
-        await db.users.put(user!);
+        await db.users.put(guestUser);
       });
 
-      // Also seed mock users and relationships if initial launch
-      await seedMockUsers();
+      // Purge any legacy mock users & relationships to maintain clean database
+      await purgeLegacyMockData();
+      return guestUser;
+    } else {
+      if (!user.isCurrentUser) {
+        await db.writeTxn(() async {
+          user.isCurrentUser = true;
+          await db.users.put(user);
+        });
+      }
+      return user;
     }
-
-    return user;
   }
 
   /// Get user by UUID
@@ -203,52 +280,32 @@ class UserService {
         .findAll();
   }
 
-  /// Seed mock users and default friendship data
-  Future<void> seedMockUsers() async {
+  /// Purge legacy mock users and follows from Isar database to ensure clean production DB
+  Future<void> purgeLegacyMockData() async {
     final db = await DatabaseService.instance.isar;
+    final mockUuids = ['user_alex', 'user_taylor', 'user_jordan'];
 
-    final mockUsersData = [
-      {
-        'uuid': 'user_alex',
-        'name': 'Alex',
-        'avatar': '☕',
-        'bio': 'Specialty coffee & roaster reviews ☕☕',
-      },
-      {
-        'uuid': 'user_taylor',
-        'name': 'Taylor',
-        'avatar': '🌿',
-        'bio': 'Nature walks & cozy matcha spots 🍵',
-      },
-      {
-        'uuid': 'user_jordan',
-        'name': 'Jordan',
-        'avatar': '🍕',
-        'bio': 'Weekend food explorer & late night bites 🌙',
-      },
-    ];
-
-    for (final data in mockUsersData) {
-      final uuid = data['uuid']!;
-      final existing = await db.users.filter().uuidEqualTo(uuid).findFirst();
-      if (existing == null) {
-        final user = User()
-          ..uuid = uuid
-          ..name = data['name']!
-          ..avatar = data['avatar']!
-          ..bio = data['bio']!
-          ..createdAt = DateTime.now().subtract(const Duration(days: 30))
-          ..isCurrentUser = false;
-
+    for (final uuid in mockUuids) {
+      final mockUser = await db.users.filter().uuidEqualTo(uuid).findFirst();
+      if (mockUser != null) {
         await db.writeTxn(() async {
-          await db.users.put(user);
+          await db.users.delete(mockUser.id);
         });
+      }
 
-        // Seed initial follow relationships (Alex & Taylor follow 'user_me')
-        if (uuid == 'user_alex' || uuid == 'user_taylor') {
-          await followUser(uuid, 'user_me');
-          await followUser('user_me', uuid); // Mutual friends!
-        }
+      final follows = await db.follows
+          .filter()
+          .followerIdEqualTo(uuid)
+          .or()
+          .followeeIdEqualTo(uuid)
+          .findAll();
+
+      if (follows.isNotEmpty) {
+        await db.writeTxn(() async {
+          for (final f in follows) {
+            await db.follows.delete(f.id);
+          }
+        });
       }
     }
   }

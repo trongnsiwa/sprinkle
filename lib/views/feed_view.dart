@@ -139,14 +139,21 @@ class _FeedViewState extends ConsumerState<FeedView> {
             );
           }
 
-          return PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            itemCount: visits.length,
-            itemBuilder: (context, index) {
-              final visit = visits[index];
-              return _buildRealFeedCard(visit);
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(feedStreamProvider);
             },
+            color: AppColors.primary,
+            backgroundColor: const Color(0xFF1C1C1E),
+            child: PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.vertical,
+              itemCount: visits.length,
+              itemBuilder: (context, index) {
+                final visit = visits[index];
+                return _buildRealFeedCard(visit);
+              },
+            ),
           );
         },
         loading: () => const Center(

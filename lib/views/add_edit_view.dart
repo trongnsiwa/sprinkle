@@ -6,11 +6,13 @@ import 'package:confetti/confetti.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/visit_record.dart';
+import '../providers/feed_provider.dart';
 import '../utils/colors.dart';
 import '../utils/typography.dart';
 import '../viewmodels/add_edit_viewmodel.dart';
 import '../viewmodels/stats_viewmodel.dart';
 import '../viewmodels/visit_list_viewmodel.dart';
+import '../views/main_tab_view.dart';
 import '../widgets/custom_thumbnail.dart';
 import '../widgets/sprinkle_button.dart';
 import '../widgets/sprinkle_text_field.dart';
@@ -420,6 +422,9 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                                 _confettiController.play();
                                 ref.read(visitListViewModelProvider.notifier).fetchVisits();
                                 ref.invalidate(todaySpotsProvider);
+                                ref.invalidate(feedStreamProvider);
+                                ref.read(currentTabProvider.notifier).state = 2;
+
                                 if (context.mounted) {
                                   SprinkleToast.show(
                                     context,

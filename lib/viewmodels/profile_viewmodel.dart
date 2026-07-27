@@ -80,9 +80,6 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     }
 
     final memories = await _userService.getUserVisits(targetUser.uuid);
-    final friendsCount = await _userService.getFriendsCount(targetUser.uuid);
-    final followersCount = await _userService.getFollowersCount(targetUser.uuid);
-    final followingCount = await _userService.getFollowingCount(targetUser.uuid);
 
     bool isFollowing = false;
     bool isFriend = false;
@@ -90,7 +87,38 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     if (!isMe) {
       isFollowing = await _userService.isFollowing(currentUser.uuid, targetUser.uuid);
       isFriend = await _userService.isFriend(currentUser.uuid, targetUser.uuid);
+
+      // Cloud truth sync if Supabase session is active
+      if (SupabaseService.instance.currentUser != null) {
+        try {
+          final cloudIsFollowing = await SupabaseService.instance.isFollowing(targetUser.uuid);
+          final cloudIsFollowedBy = await SupabaseService.instance.isFollowedBy(targetUser.uuid);
+
+          if (cloudIsFollowing != isFollowing) {
+            if (cloudIsFollowing) {
+              await _userService.followUser(currentUser.uuid, targetUser.uuid);
+            } else {
+              await _userService.unfollowUser(currentUser.uuid, targetUser.uuid);
+            }
+            isFollowing = cloudIsFollowing;
+          }
+
+          if (cloudIsFollowedBy) {
+            await _userService.followUser(targetUser.uuid, currentUser.uuid);
+          } else {
+            await _userService.unfollowUser(targetUser.uuid, currentUser.uuid);
+          }
+
+          isFriend = cloudIsFollowing && cloudIsFollowedBy;
+        } catch (_) {
+          // Fall back to local status on error
+        }
+      }
     }
+
+    final friendsCount = await _userService.getFriendsCount(targetUser.uuid);
+    final followersCount = await _userService.getFollowersCount(targetUser.uuid);
+    final followingCount = await _userService.getFollowingCount(targetUser.uuid);
 
     state = ProfileState(
       user: targetUser,
@@ -106,19 +134,56 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     );
   }
 
-  Future<void> toggleFollow() async {
-    if (state.user == null || state.isCurrentUser) return;
+  Future<bool> toggleFollow() async {
+    if (state.user == null || state.isCurrentUser) return true;
 
+    final oldState = state;
     final currentUser = await _userService.getOrCreateCurrentUser();
     final targetId = state.user!.uuid;
+    final willFollow = !state.isFollowing;
 
-    if (state.isFollowing) {
-      await _userService.unfollowUser(currentUser.uuid, targetId);
-    } else {
+    final newFollowersCount = willFollow
+        ? state.followersCount + 1
+        : (state.followersCount > 0 ? state.followersCount - 1 : 0);
+
+    // Optimistic local update
+    if (willFollow) {
       await _userService.followUser(currentUser.uuid, targetId);
+    } else {
+      await _userService.unfollowUser(currentUser.uuid, targetId);
     }
 
-    await loadProfile();
+    final isFriend = await _userService.isFriend(currentUser.uuid, targetId);
+    final friendsCount = await _userService.getFriendsCount(state.user!.uuid);
+
+    state = state.copyWith(
+      isFollowing: willFollow,
+      isFriend: isFriend,
+      followersCount: newFollowersCount,
+      friendsCount: friendsCount,
+    );
+
+    // Cloud sync if logged into Supabase
+    if (SupabaseService.instance.currentUser != null) {
+      try {
+        if (willFollow) {
+          await SupabaseService.instance.followUser(targetId);
+        } else {
+          await SupabaseService.instance.unfollowUser(targetId);
+        }
+      } catch (_) {
+        // Revert local Isar and state on failure
+        if (willFollow) {
+          await _userService.unfollowUser(currentUser.uuid, targetId);
+        } else {
+          await _userService.followUser(currentUser.uuid, targetId);
+        }
+        state = oldState;
+        return false;
+      }
+    }
+
+    return true;
   }
 
   Future<void> updateProfile({required String name, required String bio, required String avatar}) async {

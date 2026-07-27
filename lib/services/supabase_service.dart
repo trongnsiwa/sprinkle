@@ -218,4 +218,23 @@ class SupabaseService {
       return false;
     }
   }
+
+  /// Check if targetUserId is following current user
+  Future<bool> isFollowedBy(String targetUserId) async {
+    final myUid = currentUser?.id;
+    if (myUid == null) return false;
+
+    try {
+      final res = await _client
+          .from('follows')
+          .select()
+          .eq('follower_id', targetUserId)
+          .eq('followee_id', myUid)
+          .maybeSingle();
+
+      return res != null;
+    } catch (_) {
+      return false;
+    }
+  }
 }

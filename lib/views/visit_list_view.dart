@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/visit_record.dart';
+import '../providers/user_providers.dart';
 import '../services/image_service.dart';
+import '../services/user_service.dart';
 import '../utils/colors.dart';
 import '../utils/date_formatter.dart';
 import '../utils/typography.dart';
@@ -11,6 +13,7 @@ import '../widgets/custom_thumbnail.dart';
 import '../widgets/sprinkle_button.dart';
 import '../widgets/star_rating.dart';
 import 'add_edit_view.dart';
+import 'profile_view.dart';
 import 'visit_detail_view.dart';
 
 class VisitListView extends ConsumerWidget {
@@ -126,9 +129,51 @@ class VisitListView extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '📸 MEMORIES',
-                        style: AppTypography.displayLarge.copyWith(color: Colors.white),
+                      Row(
+                        children: [
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final currentUserAsync = ref.watch(currentUserProvider);
+                              final avatarEmoji = currentUserAsync.when(
+                                data: (user) => user.avatar,
+                                loading: () => '📸',
+                                error: (_, _) => '📸',
+                              );
+                              return GestureDetector(
+                                onTap: () async {
+                                  final user = await UserService.instance.getOrCreateCurrentUser();
+                                  if (context.mounted) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => ProfileView(userId: user.uuid),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      avatarEmoji,
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'MEMORIES',
+                            style: AppTypography.displayLarge.copyWith(color: Colors.white),
+                          ),
+                        ],
                       ),
                       IconButton(
                         onPressed: () => _openAddSheet(context),

@@ -10,7 +10,9 @@ import '../viewmodels/profile_viewmodel.dart';
 import '../widgets/custom_thumbnail.dart';
 import '../widgets/profile_header.dart';
 import 'edit_profile_view.dart';
+import 'settings_view.dart';
 import 'visit_detail_view.dart';
+import '../widgets/sprinkle_toast.dart';
 
 class ProfileView extends ConsumerStatefulWidget {
   final String userId;
@@ -88,44 +90,71 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                       ],
                     ),
                   )
-                : CustomScrollView(
-                    slivers: [
-                      // Pinned SliverAppBar Header
-                      SliverAppBar(
-                        pinned: true,
-                        backgroundColor: const Color(0xFF1C1C1E),
-                        elevation: 0,
-                        leading: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                          onPressed: () => Navigator.maybePop(context),
-                        ),
-                        title: Text(
-                          state.isCurrentUser ? 'MY PROFILE' : 'PROFILE',
-                          style: AppTypography.sectionTitle.copyWith(
-                            color: Colors.white,
-                            letterSpacing: 2.0,
+                : RefreshIndicator(
+                    onRefresh: () => viewModel.loadProfile(),
+                    color: AppColors.primary,
+                    backgroundColor: const Color(0xFF2C2C2E),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        // Pinned SliverAppBar Header
+                        SliverAppBar(
+                          pinned: true,
+                          backgroundColor: const Color(0xFF1C1C1E),
+                          elevation: 0,
+                          leading: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                            onPressed: () => Navigator.maybePop(context),
                           ),
+                          title: Text(
+                            state.isCurrentUser ? 'MY PROFILE' : 'PROFILE',
+                            style: AppTypography.sectionTitle.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                          centerTitle: true,
+                          actions: [
+                            if (state.isCurrentUser)
+                              IconButton(
+                                icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 22),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const SettingsView(),
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
                         ),
-                        centerTitle: true,
-                      ),
 
-                      // Profile Header Info
-                      SliverToBoxAdapter(
-                        child: ProfileHeader(
-                          user: state.user!,
-                          isCurrentUser: state.isCurrentUser,
-                          isFollowing: state.isFollowing,
-                          isFriend: state.isFriend,
-                          memoriesCount: state.memoriesCount,
-                          friendsCount: state.friendsCount,
-                          onFollowPressed: () => viewModel.toggleFollow(),
-                          onEditProfilePressed: () => _showEditProfileSheet(
-                            context,
-                            viewModel,
-                            state.user!,
+                        // Profile Header Info
+                        SliverToBoxAdapter(
+                          child: ProfileHeader(
+                            user: state.user!,
+                            isCurrentUser: state.isCurrentUser,
+                            isFollowing: state.isFollowing,
+                            isFriend: state.isFriend,
+                            memoriesCount: state.memoriesCount,
+                            friendsCount: state.friendsCount,
+                            onFollowPressed: () async {
+                              final success = await viewModel.toggleFollow();
+                              if (!success && context.mounted) {
+                                SprinkleToast.show(
+                                  context,
+                                  'Failed to update follow status. Please try again.',
+                                  type: ToastType.error,
+                                );
+                              }
+                            },
+                            onEditProfilePressed: () => _showEditProfileSheet(
+                              context,
+                              viewModel,
+                              state.user!,
+                            ),
                           ),
                         ),
-                      ),
 
                       // Memories Section Header
                       SliverToBoxAdapter(
@@ -233,6 +262,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                       ),
                     ],
                   ),
+                ),
       ),
     );
   }
