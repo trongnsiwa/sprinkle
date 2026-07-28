@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../models/visit_record.dart';
 import '../services/image_service.dart';
+import '../services/supabase_service.dart';
 import '../utils/colors.dart';
 import '../utils/typography.dart';
 import '../viewmodels/profile_viewmodel.dart';
 import '../widgets/custom_thumbnail.dart';
 import '../widgets/profile_header.dart';
+import '../widgets/skeleton.dart';
 import 'edit_profile_view.dart';
 import 'settings_view.dart';
 import 'visit_detail_view.dart';
@@ -68,8 +70,26 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       backgroundColor: const Color(0xFF1C1C1E),
       body: SafeArea(
         child: state.isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+            ? SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  children: [
+                    const SkeletonProfileHeader(),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemCount: 9,
+                      itemBuilder: (context, index) => const SkeletonGridItem(),
+                    ),
+                  ],
+                ),
               )
             : state.user == null
                 ? Center(
@@ -91,7 +111,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                     ),
                   )
                 : RefreshIndicator(
-                    onRefresh: () => viewModel.loadProfile(),
+                    onRefresh: () async {
+                      if (SupabaseService.instance.currentUser != null) {
+                        await SupabaseService.instance.syncAllDataOnLogin();
+                      }
+                      await viewModel.loadProfile();
+                    },
                     color: AppColors.primary,
                     backgroundColor: const Color(0xFF2C2C2E),
                     child: CustomScrollView(
@@ -209,6 +234,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                                       children: [
                                         CustomThumbnail(
                                           imageFileName: visit.imageFileName,
+                                          imageUrl: visit.imageUrl,
                                           size: double.infinity,
                                           borderRadius: 16,
                                         ),

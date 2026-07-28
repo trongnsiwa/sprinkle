@@ -426,12 +426,22 @@ class _AddEditViewState extends ConsumerState<AddEditView> {
                                 ref.read(currentTabProvider.notifier).state = 2;
 
                                 if (context.mounted) {
-                                  SprinkleToast.show(
-                                    context,
-                                    'Collected! ✨',
-                                    type: ToastType.success,
-                                    duration: const Duration(milliseconds: 1200),
-                                  );
+                                  final errorMsg = ref.read(addEditViewModelProvider).errorMessage;
+                                  if (errorMsg != null && errorMsg.isNotEmpty) {
+                                    SprinkleToast.show(
+                                      context,
+                                      errorMsg,
+                                      type: ToastType.info,
+                                      duration: const Duration(milliseconds: 2200),
+                                    );
+                                  } else {
+                                    SprinkleToast.show(
+                                      context,
+                                      'Collected! ✨',
+                                      type: ToastType.success,
+                                      duration: const Duration(milliseconds: 1200),
+                                    );
+                                  }
                                 }
                                 await Future.delayed(const Duration(milliseconds: 500));
                                 if (context.mounted) {

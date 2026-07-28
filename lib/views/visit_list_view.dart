@@ -10,6 +10,7 @@ import '../utils/date_formatter.dart';
 import '../utils/typography.dart';
 import '../viewmodels/visit_list_viewmodel.dart';
 import '../widgets/custom_thumbnail.dart';
+import '../widgets/skeleton.dart';
 import '../widgets/sprinkle_button.dart';
 import '../widgets/star_rating.dart';
 import 'add_edit_view.dart';
@@ -346,8 +347,16 @@ class VisitListView extends ConsumerWidget {
               slivers: slivers,
             );
           },
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+          loading: () => GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: 12,
+            itemBuilder: (context, index) => const SkeletonGridItem(),
           ),
           error: (err, stack) => Center(
             child: Text(
@@ -401,6 +410,7 @@ class _GridMemoryTileState extends State<_GridMemoryTile> {
                   tag: 'memory_${widget.visit.uuid}',
                   child: CustomThumbnail(
                     imageFileName: widget.visit.imageFileName,
+                    imageUrl: widget.visit.imageUrl,
                     size: double.infinity,
                     borderRadius: 12.0,
                   ),

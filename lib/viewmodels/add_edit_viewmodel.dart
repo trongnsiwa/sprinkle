@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -165,18 +166,35 @@ class AddEditViewModel extends StateNotifier<AddEditState> {
 
       await DatabaseService.instance.saveVisit(record);
 
-      // Background Supabase Storage & Database Sync
-      try {
-        String? downloadUrl;
-        if (state.selectedImagePath != null && state.selectedImagePath!.isNotEmpty) {
-          final file = File(state.selectedImagePath!);
-          if (await file.exists()) {
-            downloadUrl = await SupabaseService.instance.uploadMemoryImage(file, record.uuid);
+      // Supabase Storage & Database Sync (only for authenticated users)
+      if (SupabaseService.instance.currentUser != null) {
+        try {
+          final publicUserId = await SupabaseService.instance.getCurrentUserIdInUsersTable();
+          String? downloadUrl;
+          if (state.selectedImagePath != null && state.selectedImagePath!.isNotEmpty) {
+            final file = File(state.selectedImagePath!);
+            if (await file.exists()) {
+              downloadUrl = await SupabaseService.instance.uploadMemoryImage(file, record.uuid);
+            }
           }
-        }
 
-        await SupabaseService.instance.uploadMemory(record, imageUrl: downloadUrl);
-      } catch (_) {}
+          await SupabaseService.instance.uploadMemory(
+            record,
+            imageUrl: downloadUrl,
+            publicUserId: publicUserId,
+          );
+
+          if (downloadUrl != null) {
+            record.imageUrl = downloadUrl;
+            await DatabaseService.instance.saveVisit(record);
+          }
+        } catch (e) {
+          debugPrint('[AddEditViewModel] Supabase sync warning for ${record.uuid}: $e');
+          state = state.copyWith(
+            errorMessage: 'Memory saved locally, but sync to cloud failed. Please check your connection.',
+          );
+        }
+      }
 
       state = state.copyWith(isSaving: false);
       return record;

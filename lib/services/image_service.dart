@@ -65,4 +65,23 @@ class ImageService {
     } catch (_) {}
     return false;
   }
+
+  /// Download image from URL and save to local storage, returns saved filename
+  static Future<String?> downloadAndSaveImage(String url) async {
+    try {
+      final client = HttpClient();
+      final request = await client.getUrl(Uri.parse(url));
+      final response = await request.close();
+
+      if (response.statusCode == 200) {
+        final bytesBuilder = BytesBuilder();
+        await response.forEach((chunk) => bytesBuilder.add(chunk));
+        final bytes = bytesBuilder.takeBytes();
+        if (bytes.isNotEmpty) {
+          return await saveImage(bytes);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
 }

@@ -1,18 +1,21 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/visit_record.dart';
+import '../providers/engagement_providers.dart';
 import '../providers/feed_provider.dart';
-import '../services/image_service.dart';
 import '../services/supabase_service.dart';
 import '../utils/colors.dart';
 import '../utils/date_formatter.dart';
 import '../utils/typography.dart';
+import '../widgets/custom_thumbnail.dart';
+import '../widgets/skeleton.dart';
 import '../widgets/sprinkle_button.dart';
 import '../widgets/sprinkle_toast.dart';
 import '../widgets/star_rating.dart';
+import '../viewmodels/visit_list_viewmodel.dart';
+import 'comments_view.dart';
 import 'main_tab_view.dart';
 import 'profile_view.dart';
 
@@ -65,87 +68,122 @@ class _FeedViewState extends ConsumerState<FeedView> {
     }
   }
 
+  bool _isRefreshing = false;
+
+  /// Silent pull-to-refresh handler for the global feed
+  Future<void> _refreshFeed() async {
+    if (_isRefreshing) return;
+    _isRefreshing = true;
+
+    try {
+      HapticFeedback.lightImpact();
+      final sbUser = SupabaseService.instance.currentUser;
+      if (sbUser != null) {
+        await SupabaseService.instance.syncUserData(sbUser.id);
+      }
+      ref.invalidate(feedStreamProvider);
+      ref.invalidate(visitListViewModelProvider);
+      await Future.delayed(const Duration(milliseconds: 300));
+    } catch (_) {
+      // Silent error handling for smooth native pull-to-refresh experience
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final feedAsync = ref.watch(feedStreamProvider);
+    final topInset = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: feedAsync.when(
         data: (visits) {
           if (visits.isEmpty) {
-            return Container(
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // 1. Visual Element Container with Primary Glow
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                            blurRadius: 24,
-                            spreadRadius: 2,
+            return RefreshIndicator(
+              onRefresh: _refreshFeed,
+              color: AppColors.primary,
+              backgroundColor: const Color(0xFF1C1C1E),
+              edgeOffset: topInset,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.85,
+                  color: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // 1. Visual Element Container with Primary Glow
+                        Container(
+                          width: 84,
+                          height: 84,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.25),
+                                blurRadius: 24,
+                                spreadRadius: 2,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text('🌟', style: TextStyle(fontSize: 40)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                          child: const Center(
+                            child: Text('🌟', style: TextStyle(fontSize: 40)),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
 
-                    // 2. Typography
-                    Text(
-                      'No memories from friends yet',
-                      style: AppTypography.headlineMedium.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Capture your first memory or follow friends to see their moments here.',
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: Colors.white70,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
+                        // 2. Typography
+                        Text(
+                          'No memories from friends yet',
+                          style: AppTypography.headlineMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Capture your first memory or follow friends to see their moments here.',
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: Colors.white70,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
 
-                    // 3. CTA Button
-                    SprinkleButton(
-                      label: 'Capture First Memory',
-                      icon: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
-                      onPressed: () {
-                        ref.read(currentTabProvider.notifier).state = 1;
-                      },
+                        // 3. CTA Button
+                        SprinkleButton(
+                          label: 'Capture First Memory',
+                          icon: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                          onPressed: () {
+                            ref.read(currentTabProvider.notifier).state = 1;
+                          },
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             );
           }
 
+          // Pull-to-refresh for global feed PageView
           return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(feedStreamProvider);
-            },
+            onRefresh: _refreshFeed,
             color: AppColors.primary,
             backgroundColor: const Color(0xFF1C1C1E),
+            edgeOffset: topInset,
             child: PageView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               controller: _pageController,
               scrollDirection: Axis.vertical,
               itemCount: visits.length,
@@ -156,9 +194,7 @@ class _FeedViewState extends ConsumerState<FeedView> {
             ),
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        loading: () => const SkeletonFeedCard(),
         error: (err, _) => Center(
           child: Text('Error: $err', style: const TextStyle(color: Colors.white)),
         ),
@@ -279,40 +315,12 @@ class _FeedViewState extends ConsumerState<FeedView> {
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: visit.imageFileName != null && visit.imageFileName!.isNotEmpty
-                        ? FutureBuilder<File?>(
-                            future: ImageService.getImageFile(visit.imageFileName!),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData && snapshot.data != null) {
-                                return Image.file(
-                                  snapshot.data!,
-                                  fit: BoxFit.cover,
-                                  width: screenWidth,
-                                  height: screenWidth,
-                                );
-                              }
-                              return Container(
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: AppColors.primaryGradient,
-                                  ),
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.photo_rounded, size: 64, color: Colors.white38),
-                                ),
-                              );
-                            },
-                          )
-                        : Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: AppColors.primaryGradient,
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.photo_rounded, size: 64, color: Colors.white38),
-                            ),
-                          ),
+                    child: CustomThumbnail(
+                      imageFileName: visit.imageFileName,
+                      imageUrl: visit.imageUrl,
+                      size: screenWidth,
+                      borderRadius: 24.0,
+                    ),
                   ),
 
                   const SizedBox(height: 16),
@@ -356,6 +364,12 @@ class _FeedViewState extends ConsumerState<FeedView> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
+                        const SizedBox(height: 12),
+                        // Engagement Row (Likes & Comments)
+                        _FeedEngagementRow(
+                          memoryUuid: visit.uuid,
+                          onCommentTap: () => _openCommentsSheet(context, visit.uuid),
+                        ),
                       ],
                     ),
                   ),
@@ -368,6 +382,149 @@ class _FeedViewState extends ConsumerState<FeedView> {
           ),
         );
       },
+    );
+  }
+
+  void _openCommentsSheet(BuildContext context, String memoryUuid) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsView(memoryUuid: memoryUuid),
+    );
+  }
+}
+
+class _FeedEngagementRow extends ConsumerWidget {
+  final String memoryUuid;
+  final VoidCallback onCommentTap;
+
+  const _FeedEngagementRow({
+    required this.memoryUuid,
+    required this.onCommentTap,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final likeState = ref.watch(likeStateProvider(memoryUuid));
+    final likeNotifier = ref.read(likeStateProvider(memoryUuid).notifier);
+    final commentCountAsync = ref.watch(commentCountProvider(memoryUuid));
+    final isGuest = SupabaseService.instance.currentUser == null;
+
+    final commentCount = commentCountAsync.when(
+      data: (count) => count,
+      loading: () => 0,
+      error: (_, _) => 0,
+    );
+
+    return Opacity(
+      opacity: isGuest ? 0.5 : 1.0,
+      child: Row(
+        children: [
+          // Like Button
+          Tooltip(
+            message: isGuest ? 'Log in to like and comment' : '',
+            child: GestureDetector(
+              onTap: () async {
+                if (isGuest) {
+                  SprinkleToast.show(
+                    context,
+                    'Log in to like and comment',
+                    type: ToastType.info,
+                  );
+                  return;
+                }
+                HapticFeedback.lightImpact();
+                final success = await likeNotifier.toggleLike();
+                if (!success && context.mounted) {
+                  SprinkleToast.show(
+                    context,
+                    'Failed to update like status',
+                    type: ToastType.error,
+                  );
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: likeState.isLiked
+                      ? AppColors.primary.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: likeState.isLiked
+                        ? AppColors.primary.withValues(alpha: 0.5)
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      likeState.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      size: 18,
+                      color: likeState.isLiked ? AppColors.primary : Colors.white70,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${likeState.likeCount}',
+                      style: AppTypography.labelBold.copyWith(
+                        color: likeState.isLiked ? AppColors.primary : Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Comment Button
+          Tooltip(
+            message: isGuest ? 'Log in to like and comment' : '',
+            child: GestureDetector(
+              onTap: () {
+                if (isGuest) {
+                  SprinkleToast.show(
+                    context,
+                    'Log in to like and comment',
+                    type: ToastType.info,
+                  );
+                  return;
+                }
+                onCommentTap();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 18,
+                      color: Colors.white70,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$commentCount',
+                      style: AppTypography.labelBold.copyWith(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

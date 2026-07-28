@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/feed_provider.dart';
+import '../../providers/user_providers.dart';
+import '../../viewmodels/profile_viewmodel.dart';
 import '../../services/supabase_service.dart';
 import '../../services/user_service.dart';
 import '../../utils/colors.dart';
@@ -10,14 +14,14 @@ import '../../widgets/sprinkle_toast.dart';
 import '../main_tab_view.dart';
 import 'signup_view.dart';
 
-class LoginView extends StatefulWidget {
+class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends ConsumerState<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -53,6 +57,14 @@ class _LoginViewState extends State<LoginView> {
         password: password,
       );
       await UserService.instance.getOrCreateCurrentUser();
+      await SupabaseService.instance.syncAllDataOnLogin();
+
+      ref.invalidate(currentUserProvider);
+      ref.invalidate(feedStreamProvider);
+      final sbUser = SupabaseService.instance.currentUser;
+      if (sbUser != null) {
+        ref.invalidate(profileViewModelProvider(sbUser.id));
+      }
 
       if (mounted) {
         Navigator.of(context).pushReplacement(

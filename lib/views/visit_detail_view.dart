@@ -210,6 +210,7 @@ class _VisitDetailViewState extends ConsumerState<VisitDetailView> {
                     tag: 'memory_${_currentVisit.uuid}',
                     child: CustomThumbnail(
                       imageFileName: _currentVisit.imageFileName,
+                      imageUrl: _currentVisit.imageUrl,
                       imageFile: _imageFile,
                       size: double.infinity,
                       borderRadius: 0,

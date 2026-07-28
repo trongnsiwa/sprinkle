@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/feed_provider.dart';
+import '../../providers/user_providers.dart';
+import '../../viewmodels/profile_viewmodel.dart';
 import '../../services/supabase_service.dart';
 import '../../services/user_service.dart';
 import '../../utils/colors.dart';
@@ -9,14 +13,14 @@ import '../../widgets/sprinkle_text_field.dart';
 import '../../widgets/sprinkle_toast.dart';
 import '../main_tab_view.dart';
 
-class SignupView extends StatefulWidget {
+class SignupView extends ConsumerStatefulWidget {
   const SignupView({super.key});
 
   @override
-  State<SignupView> createState() => _SignupViewState();
+  ConsumerState<SignupView> createState() => _SignupViewState();
 }
 
-class _SignupViewState extends State<SignupView> {
+class _SignupViewState extends ConsumerState<SignupView> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -71,6 +75,14 @@ class _SignupViewState extends State<SignupView> {
         avatar: _selectedAvatar,
       );
       await UserService.instance.getOrCreateCurrentUser();
+      await SupabaseService.instance.syncAllDataOnLogin();
+
+      ref.invalidate(currentUserProvider);
+      ref.invalidate(feedStreamProvider);
+      final sbUser = SupabaseService.instance.currentUser;
+      if (sbUser != null) {
+        ref.invalidate(profileViewModelProvider(sbUser.id));
+      }
 
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(

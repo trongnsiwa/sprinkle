@@ -247,6 +247,12 @@ class UserService {
         .findFirst();
   }
 
+  /// Get visit record by UUID
+  Future<VisitRecord?> getVisitRecordByUuid(String uuid) async {
+    final db = await DatabaseService.instance.isar;
+    return await db.visitRecords.filter().uuidEqualTo(uuid).findFirst();
+  }
+
   /// Get followers count
   Future<int> getFollowersCount(String userId) async {
     final db = await DatabaseService.instance.isar;
@@ -264,12 +270,14 @@ class UserService {
     final db = await DatabaseService.instance.isar;
     final user = await getUserByUuid(userId);
     if (user != null && user.isCurrentUser) {
-      // Return all visits without userId or with user_me
+      // Return all visits without userId, with matching userId, or with user_me
       return await db.visitRecords
           .filter()
           .userIdEqualTo(userId)
           .or()
           .userIdIsNull()
+          .or()
+          .userIdEqualTo('user_me')
           .sortByTimestampDesc()
           .findAll();
     }

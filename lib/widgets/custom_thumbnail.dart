@@ -4,6 +4,7 @@ import '../services/image_service.dart';
 
 class CustomThumbnail extends StatelessWidget {
   final String? imageFileName;
+  final String? imageUrl;
   final File? imageFile;
   final String? imagePath;
   final double size;
@@ -15,6 +16,7 @@ class CustomThumbnail extends StatelessWidget {
   const CustomThumbnail({
     super.key,
     this.imageFileName,
+    this.imageUrl,
     this.imageFile,
     this.imagePath,
     this.size = 50.0,
@@ -67,12 +69,70 @@ class CustomThumbnail extends StatelessWidget {
           if (snapshot.hasData && snapshot.data != null) {
             return _buildImageContainer(snapshot.data!, shape, r, effectiveBorder, iconSize);
           }
+          if (imageUrl != null && imageUrl!.isNotEmpty) {
+            return _buildNetworkImageContainer(imageUrl!, shape, r, effectiveBorder, iconSize);
+          }
           return darkBoxPlaceholder;
         },
       );
     }
 
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return _buildNetworkImageContainer(imageUrl!, shape, r, effectiveBorder, iconSize);
+    }
+
     return darkBoxPlaceholder;
+  }
+
+  Widget _buildNetworkImageContainer(
+    String url,
+    BoxShape shape,
+    BorderRadius borderRadius,
+    BoxBorder? border,
+    double iconSize,
+  ) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        shape: shape,
+        borderRadius: isCircle ? null : borderRadius,
+        border: border,
+      ),
+      child: ClipRRect(
+        borderRadius: isCircle
+            ? (size.isFinite ? BorderRadius.circular(size / 2) : BorderRadius.circular(50))
+            : borderRadius,
+        child: Image.network(
+          url,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded) return child;
+            return AnimatedOpacity(
+              opacity: frame == null ? 0 : 1,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              child: child,
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: const Color(0xFF1C1C1E),
+              child: Center(
+                child: Icon(
+                  Icons.broken_image_rounded,
+                  color: Colors.white.withValues(alpha: 0.5),
+                  size: iconSize,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Widget _buildImageContainer(

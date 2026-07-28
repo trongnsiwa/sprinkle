@@ -14,6 +14,7 @@ class VisitRecord {
   double rating = 0.0;
   late DateTime timestamp;
   String? imageFileName;
+  String? imageUrl;
   String? address;
   double? latitude;
   double? longitude;

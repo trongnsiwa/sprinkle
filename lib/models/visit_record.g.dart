@@ -27,48 +27,53 @@ const VisitRecordSchema = CollectionSchema(
       name: r'imageFileName',
       type: IsarType.string,
     ),
-    r'latitude': PropertySchema(
+    r'imageUrl': PropertySchema(
       id: 2,
+      name: r'imageUrl',
+      type: IsarType.string,
+    ),
+    r'latitude': PropertySchema(
+      id: 3,
       name: r'latitude',
       type: IsarType.double,
     ),
     r'longitude': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'longitude',
       type: IsarType.double,
     ),
     r'name': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'name',
       type: IsarType.string,
     ),
     r'notes': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'notes',
       type: IsarType.string,
     ),
     r'rating': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'rating',
       type: IsarType.double,
     ),
     r'tags': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'tags',
       type: IsarType.stringList,
     ),
     r'timestamp': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'timestamp',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'userId',
       type: IsarType.string,
     ),
     r'uuid': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'uuid',
       type: IsarType.string,
     )
@@ -132,6 +137,12 @@ int _visitRecordEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.imageUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
   {
     final value = object.notes;
@@ -164,15 +175,16 @@ void _visitRecordSerialize(
 ) {
   writer.writeString(offsets[0], object.address);
   writer.writeString(offsets[1], object.imageFileName);
-  writer.writeDouble(offsets[2], object.latitude);
-  writer.writeDouble(offsets[3], object.longitude);
-  writer.writeString(offsets[4], object.name);
-  writer.writeString(offsets[5], object.notes);
-  writer.writeDouble(offsets[6], object.rating);
-  writer.writeStringList(offsets[7], object.tags);
-  writer.writeDateTime(offsets[8], object.timestamp);
-  writer.writeString(offsets[9], object.userId);
-  writer.writeString(offsets[10], object.uuid);
+  writer.writeString(offsets[2], object.imageUrl);
+  writer.writeDouble(offsets[3], object.latitude);
+  writer.writeDouble(offsets[4], object.longitude);
+  writer.writeString(offsets[5], object.name);
+  writer.writeString(offsets[6], object.notes);
+  writer.writeDouble(offsets[7], object.rating);
+  writer.writeStringList(offsets[8], object.tags);
+  writer.writeDateTime(offsets[9], object.timestamp);
+  writer.writeString(offsets[10], object.userId);
+  writer.writeString(offsets[11], object.uuid);
 }
 
 VisitRecord _visitRecordDeserialize(
@@ -185,15 +197,16 @@ VisitRecord _visitRecordDeserialize(
   object.address = reader.readStringOrNull(offsets[0]);
   object.id = id;
   object.imageFileName = reader.readStringOrNull(offsets[1]);
-  object.latitude = reader.readDoubleOrNull(offsets[2]);
-  object.longitude = reader.readDoubleOrNull(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.notes = reader.readStringOrNull(offsets[5]);
-  object.rating = reader.readDouble(offsets[6]);
-  object.tags = reader.readStringList(offsets[7]) ?? [];
-  object.timestamp = reader.readDateTime(offsets[8]);
-  object.userId = reader.readStringOrNull(offsets[9]);
-  object.uuid = reader.readString(offsets[10]);
+  object.imageUrl = reader.readStringOrNull(offsets[2]);
+  object.latitude = reader.readDoubleOrNull(offsets[3]);
+  object.longitude = reader.readDoubleOrNull(offsets[4]);
+  object.name = reader.readString(offsets[5]);
+  object.notes = reader.readStringOrNull(offsets[6]);
+  object.rating = reader.readDouble(offsets[7]);
+  object.tags = reader.readStringList(offsets[8]) ?? [];
+  object.timestamp = reader.readDateTime(offsets[9]);
+  object.userId = reader.readStringOrNull(offsets[10]);
+  object.uuid = reader.readString(offsets[11]);
   return object;
 }
 
@@ -209,22 +222,24 @@ P _visitRecordDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
       return (reader.readDoubleOrNull(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readDouble(offset)) as P;
-    case 7:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 8:
-      return (reader.readDateTime(offset)) as P;
-    case 9:
       return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (reader.readDouble(offset)) as P;
+    case 8:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 9:
+      return (reader.readDateTime(offset)) as P;
     case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -843,6 +858,159 @@ extension VisitRecordQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'imageFileName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'imageUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'imageUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition> imageUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'imageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'imageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition> imageUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'imageUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'imageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'imageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'imageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition> imageUrlMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'imageUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imageUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterFilterCondition>
+      imageUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'imageUrl',
         value: '',
       ));
     });
@@ -1953,6 +2121,18 @@ extension VisitRecordQuerySortBy
     });
   }
 
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByImageUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imageUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByImageUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imageUrl', Sort.desc);
+    });
+  }
+
   QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> sortByLatitude() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'latitude', Sort.asc);
@@ -2089,6 +2269,18 @@ extension VisitRecordQuerySortThenBy
     });
   }
 
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByImageUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imageUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByImageUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imageUrl', Sort.desc);
+    });
+  }
+
   QueryBuilder<VisitRecord, VisitRecord, QAfterSortBy> thenByLatitude() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'latitude', Sort.asc);
@@ -2203,6 +2395,13 @@ extension VisitRecordQueryWhereDistinct
     });
   }
 
+  QueryBuilder<VisitRecord, VisitRecord, QDistinct> distinctByImageUrl(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'imageUrl', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<VisitRecord, VisitRecord, QDistinct> distinctByLatitude() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'latitude');
@@ -2279,6 +2478,12 @@ extension VisitRecordQueryProperty
   QueryBuilder<VisitRecord, String?, QQueryOperations> imageFileNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'imageFileName');
+    });
+  }
+
+  QueryBuilder<VisitRecord, String?, QQueryOperations> imageUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'imageUrl');
     });
   }
 

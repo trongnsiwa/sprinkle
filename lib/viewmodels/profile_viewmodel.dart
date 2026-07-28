@@ -79,7 +79,16 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       return;
     }
 
-    final memories = await _userService.getUserVisits(targetUser.uuid);
+    var memories = await _userService.getUserVisits(targetUser.uuid);
+
+    // If currentUser and local memories are empty, trigger Supabase cloud sync
+    if (memories.isEmpty && isMe && SupabaseService.instance.currentUser != null) {
+      final sbUser = SupabaseService.instance.currentUser;
+      if (sbUser != null) {
+        await SupabaseService.instance.fetchAndSyncUserMemories(sbUser.id);
+        memories = await _userService.getUserVisits(targetUser.uuid);
+      }
+    }
 
     bool isFollowing = false;
     bool isFriend = false;
